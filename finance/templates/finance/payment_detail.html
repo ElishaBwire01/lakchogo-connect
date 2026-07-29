@@ -1,0 +1,60 @@
+{% extends 'base_dashboard.html' %}
+
+{% block title %}Payment Detail - LakChogo Connect{% endblock %}
+
+{% block dashboard_content %}
+<div class="row">
+    <div class="col-12">
+        <h1 class="h3">Payment Detail</h1>
+        <p class="text-muted">View payment details</p>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-body">
+                <table class="table">
+                    <tr>
+                        <th>ID:</th>
+                        <td>{{ payment.id }}</td>
+                    </tr>
+                    <tr>
+                        <th>Member:</th>
+                        <td>{{ payment.member.get_full_name }}</td>
+                    </tr>
+                    <tr>
+                        <th>Category:</th>
+                        <td>{{ payment.category.name }}</td>
+                    </tr>
+                    <tr>
+                        <th>Amount:</th>
+                        <td>KES {{ payment.amount }}</td>
+                    </tr>
+                    <tr>
+                        <th>Method:</th>
+                        <td>{{ payment.get_payment_method_display }}</td>
+                    </tr>
+                    <tr>
+                        <th>Status:</th>
+                        <td>
+                            <span class="badge bg-{% if payment.status == 'completed' %}success{% elif payment.status == 'pending' %}warning{% else %}danger{% endif %}">
+                                {{ payment.status }}
+                            </span>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th>Date:</th>
+                        <td>{{ payment.created_at|date:"F d, Y H:i" }}</td>
+                    </tr>
+                    <tr>
+                        <th>Notes:</th>
+                        <td>{{ payment.notes|default:"No notes" }}</td>
+                    </tr>
+                </table>
+                <a href="{% url 'finance:payment_list' %}" class="btn btn-secondary">Back to Payments</a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

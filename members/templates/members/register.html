@@ -1,0 +1,76 @@
+{% extends 'base_dashboard.html' %}
+
+{% block title %}Register Member - LakChogo Connect{% endblock %}
+
+{% block dashboard_content %}
+<div class="row">
+    <div class="col-12">
+        <h1 class="h3">Register New Member</h1>
+        <p class="text-muted">Add a new member to the welfare group</p>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-md-8 mx-auto">
+        <div class="card">
+            <div class="card-body">
+                <form method="post">
+                    {% csrf_token %}
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Username</label>
+                            <input type="text" class="form-control" name="username" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Password</label>
+                            <input type="password" class="form-control" name="password" required>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">First Name</label>
+                            <input type="text" class="form-control" name="first_name" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Last Name</label>
+                            <input type="text" class="form-control" name="last_name" required>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Phone Number</label>
+                            <input type="text" class="form-control" name="phone" placeholder="+254712345678" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">ID Number</label>
+                            <input type="text" class="form-control" name="id_number" required>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Email</label>
+                        <input type="email" class="form-control" name="email">
+                    </div>
+                    <hr>
+                    <h5>Next of Kin Information</h5>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Next of Kin Name</label>
+                            <input type="text" class="form-control" name="next_of_kin_name">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Next of Kin Phone</label>
+                            <input type="text" class="form-control" name="next_of_kin_phone" placeholder="+254712345678">
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Relationship</label>
+                        <input type="text" class="form-control" name="next_of_kin_relationship">
+                    </div>
+                    <button type="submit" class="btn btn-primary">Register Member</button>
+                    <a href="{% url 'members:list' %}" class="btn btn-secondary">Cancel</a>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

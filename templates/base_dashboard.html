@@ -1,0 +1,135 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <!-- Sidebar -->
+        <nav class="col-md-2 d-md-block bg-light sidebar" style="min-height: 100vh; padding: 0;">
+            <div class="position-sticky pt-3">
+                <div class="text-center mb-4">
+                    <h5>LakChogo Connect</h5>
+                    <small class="text-muted">Dashboard</small>
+                </div>
+                <ul class="nav flex-column">
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.resolver_match.url_name == 'index' %}active bg-primary text-white{% endif %}" 
+                           href="{% url 'dashboard:index' %}">
+                            <i class="fas fa-home"></i> Dashboard
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'members:list' %}">
+                            <i class="fas fa-users"></i> Members
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'finance:index' %}">
+                            <i class="fas fa-money-bill"></i> Finance
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'meetings:index' %}">
+                            <i class="fas fa-calendar"></i> Meetings
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'compliance:index' %}">
+                            <i class="fas fa-check-circle"></i> Compliance
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'welfare:index' %}">
+                            <i class="fas fa-heart"></i> Welfare
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'reports:index' %}">
+                            <i class="fas fa-file-alt"></i> Reports
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'communications:notification_list' %}">
+                            <i class="fas fa-bell"></i> Notifications
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'communications:chat_dashboard' %}">
+                            <i class="fas fa-comment-dots"></i> Chat
+                        </a>
+                    </li>
+                    <hr>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'accounts:profile' %}">
+                            <i class="fas fa-user"></i> Profile
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link text-danger" href="{% url 'accounts:logout' %}">
+                            <i class="fas fa-sign-out-alt"></i> Logout
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </nav>
+
+        <!-- Main content -->
+        <main class="col-md-10 ms-sm-auto px-md-4 py-3">
+            {% block dashboard_content %}
+            <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+                <h1 class="h2">{% block page_title %}Dashboard{% endblock %}</h1>
+            </div>
+            {% endblock %}
+        </main>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+<style>
+    .sidebar {
+        background: #f8f9fa !important;
+        border-right: 1px solid #dee2e6;
+    }
+    .nav-link {
+        color: #333;
+        padding: 10px 20px;
+        margin: 2px 8px;
+        border-radius: 8px;
+        transition: all 0.3s;
+    }
+    .nav-link:hover {
+        background: #e9ecef;
+    }
+    .nav-link.active {
+        background: #0d6efd !important;
+        color: white !important;
+    }
+    .nav-link i {
+        width: 24px;
+        margin-right: 10px;
+    }
+    .card {
+        box-shadow: 0 0.125rem 0.25rem rgba(0,0,0,0.075);
+        border: none;
+        margin-bottom: 20px;
+    }
+    .card:hover {
+        box-shadow: 0 0.5rem 1rem rgba(0,0,0,0.15);
+        transition: all 0.3s;
+    }
+    .stat-card {
+        padding: 20px;
+        border-radius: 10px;
+        color: white;
+    }
+    .stat-card h2 {
+        font-size: 2.5rem;
+        font-weight: bold;
+    }
+    .stat-card i {
+        font-size: 2.5rem;
+        opacity: 0.5;
+    }
+</style>
+{% endblock %}

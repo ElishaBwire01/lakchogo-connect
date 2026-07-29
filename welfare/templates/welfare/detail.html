@@ -1,0 +1,66 @@
+{% extends 'base_dashboard.html' %}
+
+{% block title %}Event Detail - LakChogo Connect{% endblock %}
+
+{% block dashboard_content %}
+<div class="row">
+    <div class="col-12">
+        <h1 class="h3">Event: {{ event.deceased_name }}</h1>
+        <p class="text-muted">Welfare event details</p>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-body">
+                <table class="table">
+                    <tr>
+                        <th>Member:</th>
+                        <td>{{ event.member.get_full_name }}</td>
+                    </tr>
+                    <tr>
+                        <th>Deceased:</th>
+                        <td>{{ event.deceased_name }}</td>
+                    </tr>
+                    <tr>
+                        <th>Relationship:</th>
+                        <td>{{ event.relationship }}</td>
+                    </tr>
+                    <tr>
+                        <th>Date of Death:</th>
+                        <td>{{ event.date_of_death|date:"F d, Y" }}</td>
+                    </tr>
+                    <tr>
+                        <th>Collection Target:</th>
+                        <td>KES {{ event.collection_target }}</td>
+                    </tr>
+                    <tr>
+                        <th>Amount Collected:</th>
+                        <td>KES {{ event.amount_collected }}</td>
+                    </tr>
+                    <tr>
+                        <th>Progress:</th>
+                        <td>
+                            <div class="progress">
+                                <div class="progress-bar" role="progressbar" style="width: {{ event.progress_percentage }}%">
+                                    {{ event.progress_percentage|floatformat:0 }}%
+                                </div>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th>Status:</th>
+                        <td>
+                            <span class="badge bg-{% if event.status == 'active' %}success{% elif event.status == 'closed' %}warning{% else %}info{% endif %}">
+                                {{ event.status|upper }}
+                            </span>
+                        </td>
+                    </tr>
+                </table>
+                <a href="{% url 'welfare:index' %}" class="btn btn-secondary">Back</a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

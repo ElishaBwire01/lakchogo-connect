@@ -1,0 +1,71 @@
+{% extends 'base_dashboard.html' %}
+
+{% block title %}Members - LakChogo Connect{% endblock %}
+
+{% block dashboard_content %}
+<div class="row">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center">
+            <h1 class="h3">Members</h1>
+            <a href="{% url 'members:register' %}" class="btn btn-primary">
+                <i class="fas fa-user-plus"></i> Register Member
+            </a>
+        </div>
+        <p class="text-muted">Manage all registered members</p>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>Member ID</th>
+                                <th>Name</th>
+                                <th>Phone</th>
+                                <th>Status</th>
+                                <th>Compliance</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for member in members %}
+                            <tr>
+                                <td>{{ member.member_id }}</td>
+                                <td>{{ member.get_full_name }}</td>
+                                <td>{{ member.user.phone }}</td>
+                                <td>
+                                    <span class="badge bg-{% if member.status == 'active' %}success{% elif member.status == 'inactive' %}danger{% else %}warning{% endif %}">
+                                        {{ member.status }}
+                                    </span>
+                                </td>
+                                <td>
+                                    <span class="badge bg-{% if member.compliance_status == 'green' %}success{% elif member.compliance_status == 'yellow' %}warning{% else %}danger{% endif %}">
+                                        {{ member.compliance_status|upper }}
+                                    </span>
+                                </td>
+                                <td>
+                                    <a href="{% url 'members:detail' member.member_id %}" class="btn btn-sm btn-info">
+                                        <i class="fas fa-eye"></i>
+                                    </a>
+                                    <a href="{% url 'members:edit' member.member_id %}" class="btn btn-sm btn-warning">
+                                        <i class="fas fa-edit"></i>
+                                    </a>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="6" class="text-center">No members registered yet.</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

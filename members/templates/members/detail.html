@@ -1,0 +1,96 @@
+{% extends 'base_dashboard.html' %}
+
+{% block title %}{{ member.get_full_name }} - LakChogo Connect{% endblock %}
+
+{% block dashboard_content %}
+<div class="row">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center">
+            <h1 class="h3">{{ member.get_full_name }}</h1>
+            <div>
+                <a href="{% url 'members:edit' member.member_id %}" class="btn btn-warning">
+                    <i class="fas fa-edit"></i> Edit
+                </a>
+                <a href="{% url 'members:list' %}" class="btn btn-secondary">Back</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5>Member Information</h5>
+            </div>
+            <div class="card-body">
+                <table class="table">
+                    <tr>
+                        <th>Member ID:</th>
+                        <td>{{ member.member_id }}</td>
+                    </tr>
+                    <tr>
+                        <th>Name:</th>
+                        <td>{{ member.get_full_name }}</td>
+                    </tr>
+                    <tr>
+                        <th>Phone:</th>
+                        <td>{{ member.user.phone }}</td>
+                    </tr>
+                    <tr>
+                        <th>Email:</th>
+                        <td>{{ member.user.email|default:"Not provided" }}</td>
+                    </tr>
+                    <tr>
+                        <th>ID Number:</th>
+                        <td>{{ member.user.id_number }}</td>
+                    </tr>
+                    <tr>
+                        <th>Status:</th>
+                        <td>
+                            <span class="badge bg-{% if member.status == 'active' %}success{% elif member.status == 'inactive' %}danger{% else %}warning{% endif %}">
+                                {{ member.status|upper }}
+                            </span>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th>Compliance:</th>
+                        <td>
+                            <span class="badge bg-{% if member.compliance_status == 'green' %}success{% elif member.compliance_status == 'yellow' %}warning{% else %}danger{% endif %}">
+                                {{ member.compliance_status|upper }}
+                            </span>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th>Joined:</th>
+                        <td>{{ member.date_joined|date:"F d, Y" }}</td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5>Next of Kin</h5>
+            </div>
+            <div class="card-body">
+                <table class="table">
+                    <tr>
+                        <th>Name:</th>
+                        <td>{{ member.next_of_kin_name|default:"Not provided" }}</td>
+                    </tr>
+                    <tr>
+                        <th>Phone:</th>
+                        <td>{{ member.next_of_kin_phone|default:"Not provided" }}</td>
+                    </tr>
+                    <tr>
+                        <th>Relationship:</th>
+                        <td>{{ member.next_of_kin_relationship|default:"Not provided" }}</td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

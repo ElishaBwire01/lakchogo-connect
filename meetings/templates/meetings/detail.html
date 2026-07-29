@@ -1,0 +1,45 @@
+{% extends 'base_dashboard.html' %}
+
+{% block title %}{{ meeting.title }} - LakChogo Connect{% endblock %}
+
+{% block dashboard_content %}
+<div class="row">
+    <div class="col-12">
+        <h1 class="h3">{{ meeting.title }}</h1>
+        <p class="text-muted">Meeting details</p>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-body">
+                <table class="table">
+                    <tr>
+                        <th>Date:</th>
+                        <td>{{ meeting.date|date:"F d, Y H:i" }}</td>
+                    </tr>
+                    <tr>
+                        <th>Venue:</th>
+                        <td>{{ meeting.venue }}</td>
+                    </tr>
+                    <tr>
+                        <th>Status:</th>
+                        <td>
+                            <span class="badge bg-{% if meeting.status == 'scheduled' %}primary{% elif meeting.status == 'ongoing' %}warning{% elif meeting.status == 'completed' %}success{% else %}danger{% endif %}">
+                                {{ meeting.status|upper }}
+                            </span>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th>Agenda:</th>
+                        <td>{{ meeting.agenda|default:"No agenda provided"|linebreaks }}</td>
+                    </tr>
+                </table>
+                <a href="{% url 'meetings:attendance' meeting.id %}" class="btn btn-primary">Take Attendance</a>
+                <a href="{% url 'meetings:index' %}" class="btn btn-secondary">Back</a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,65 @@
+{% extends 'base_dashboard.html' %}
+
+{% block title %}Search Members - LakChogo Connect{% endblock %}
+
+{% block dashboard_content %}
+<div class="row">
+    <div class="col-12">
+        <h1 class="h3">Search Members</h1>
+        <form method="get" class="mt-3">
+            <div class="input-group">
+                <input type="text" class="form-control" name="q" placeholder="Search by name, phone, or member ID" value="{{ query }}">
+                <button type="submit" class="btn btn-primary">Search</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+{% if query %}
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-body">
+                <p>Found {{ members.count }} results for "{{ query }}"</p>
+                <div class="table-responsive">
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>Member ID</th>
+                                <th>Name</th>
+                                <th>Phone</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for member in members %}
+                            <tr>
+                                <td>{{ member.member_id }}</td>
+                                <td>{{ member.get_full_name }}</td>
+                                <td>{{ member.user.phone }}</td>
+                                <td>
+                                    <span class="badge bg-{% if member.status == 'active' %}success{% else %}danger{% endif %}">
+                                        {{ member.status }}
+                                    </span>
+                                </td>
+                                <td>
+                                    <a href="{% url 'members:detail' member.member_id %}" class="btn btn-sm btn-info">
+                                        <i class="fas fa-eye"></i>
+                                    </a>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="5" class="text-center">No members found.</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}

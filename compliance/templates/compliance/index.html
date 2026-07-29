@@ -1,0 +1,39 @@
+{% extends 'base_dashboard.html' %}
+
+{% block title %}Compliance - LakChogo Connect{% endblock %}
+
+{% block dashboard_content %}
+<div class="row">
+    <div class="col-12">
+        <h1 class="h3">Compliance Dashboard</h1>
+        <p class="text-muted">Monitor member compliance status</p>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-md-4">
+        <div class="card bg-success text-white">
+            <div class="card-body">
+                <h5>Eligible</h5>
+                <h2>🟢 0</h2>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card bg-warning text-dark">
+            <div class="card-body">
+                <h5>Warning</h5>
+                <h2>🟡 0</h2>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card bg-danger text-white">
+            <div class="card-body">
+                <h5>Not Eligible</h5>
+                <h2>🔴 0</h2>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

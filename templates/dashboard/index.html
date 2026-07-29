@@ -1,0 +1,114 @@
+{% extends 'base_dashboard.html' %}
+
+{% block title %}Dashboard - LakChogo Connect{% endblock %}
+
+{% block page_title %}Welcome, {{ user.get_full_name }}!{% endblock %}
+
+{% block dashboard_content %}
+{{ block.super }}
+
+<div class="row mt-4">
+    <!-- Stats Cards -->
+    <div class="col-md-3">
+        <div class="card stat-card bg-primary">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h6 class="text-white-50">Total Members</h6>
+                    <h2 class="text-white">{{ dashboard.member_stats.total|default:0 }}</h2>
+                    <small class="text-white-50">+{{ dashboard.member_stats.new|default:0 }} new this month</small>
+                </div>
+                <i class="fas fa-users"></i>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card stat-card bg-success">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h6 class="text-white-50">Total Payments</h6>
+                    <h2 class="text-white">KES {{ dashboard.payment_stats.total|floatformat:0|default:'0' }}</h2>
+                    <small class="text-white-50">KES {{ dashboard.payment_stats.monthly|floatformat:0|default:'0' }} this month</small>
+                </div>
+                <i class="fas fa-money-bill-wave"></i>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card stat-card bg-warning">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h6 class="text-dark">Meetings</h6>
+                    <h2 class="text-dark">{{ dashboard.meeting_stats.total|default:0 }}</h2>
+                    <small class="text-dark">{{ dashboard.meeting_stats.upcoming|default:0 }} upcoming</small>
+                </div>
+                <i class="fas fa-calendar"></i>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card stat-card bg-danger">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h6 class="text-white-50">Compliance</h6>
+                    <div>
+                        <span class="badge bg-success me-1">🟢 {{ dashboard.compliance_stats.green|default:0 }}</span>
+                        <span class="badge bg-warning me-1">🟡 {{ dashboard.compliance_stats.yellow|default:0 }}</span>
+                        <span class="badge bg-danger">🔴 {{ dashboard.compliance_stats.red|default:0 }}</span>
+                    </div>
+                    <small class="text-white-50">{{ dashboard.compliance_stats.green|default:0 }} eligible</small>
+                </div>
+                <i class="fas fa-check-circle"></i>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Recent Activity -->
+<div class="row mt-4">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-clock me-2"></i>Recent Activity</h5>
+            </div>
+            <div class="card-body">
+                <ul class="list-group list-group-flush">
+                    {% for activity in dashboard.recent_activity %}
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            <div>
+                                <i class="fas fa-{{ activity.icon }} text-{{ activity.color }} me-2"></i>
+                                {{ activity.message }}
+                            </div>
+                            <small class="text-muted">{{ activity.time|timesince }} ago</small>
+                        </li>
+                    {% empty %}
+                        <li class="list-group-item text-muted">No recent activity</li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-bolt me-2"></i>Quick Actions</h5>
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    <a href="{% url 'members:register' %}" class="btn btn-outline-primary">
+                        <i class="fas fa-user-plus"></i> Register Member
+                    </a>
+                    <a href="{% url 'finance:record_payment' %}" class="btn btn-outline-success">
+                        <i class="fas fa-plus-circle"></i> Record Payment
+                    </a>
+                    <a href="{% url 'meetings:schedule' %}" class="btn btn-outline-warning">
+                        <i class="fas fa-calendar-plus"></i> Schedule Meeting
+                    </a>
+                    <a href="{% url 'welfare:create' %}" class="btn btn-outline-danger">
+                        <i class="fas fa-heart"></i> Welfare Event
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

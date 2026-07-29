@@ -1,0 +1,52 @@
+{% extends 'base_dashboard.html' %}
+
+{% block title %}Finance - LakChogo Connect{% endblock %}
+
+{% block dashboard_content %}
+<div class="row">
+    <div class="col-12">
+        <h1 class="h3">Finance Management</h1>
+        <p class="text-muted">Track all contributions and payments</p>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-md-4">
+        <div class="card bg-success text-white">
+            <div class="card-body">
+                <h5>Total Collected</h5>
+                <h2>KES 0.00</h2>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card bg-warning text-dark">
+            <div class="card-body">
+                <h5>Pending Payments</h5>
+                <h2>0</h2>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card bg-primary text-white">
+            <div class="card-body">
+                <h5>This Month</h5>
+                <h2>KES 0.00</h2>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5>Recent Payments</h5>
+            </div>
+            <div class="card-body">
+                <p class="text-muted">No payments recorded yet.</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
