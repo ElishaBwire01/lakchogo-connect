@@ -11,7 +11,7 @@
                 <i class="fas fa-calendar-plus"></i> Schedule Meeting
             </a>
         </div>
-        <p class="text-muted">Manage all group meetings</p>
+        <p class="text-muted">View and manage all group meetings</p>
     </div>
 </div>
 
@@ -19,7 +19,85 @@
     <div class="col-12">
         <div class="card">
             <div class="card-body">
-                <p class="text-muted">No meetings scheduled yet.</p>
+                <!-- Filters -->
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <form method="get" class="d-flex">
+                            <input type="text" class="form-control me-2" name="q" placeholder="Search meetings..." value="{{ query|default:'' }}">
+                            <button type="submit" class="btn btn-primary">Search</button>
+                        </form>
+                    </div>
+                    <div class="col-md-6 text-end">
+                        <select class="form-select w-auto d-inline-block" name="status" onchange="this.form.submit()">
+                            <option value="">All Status</option>
+                            <option value="scheduled" {% if status_filter == 'scheduled' %}selected{% endif %}>Scheduled</option>
+                            <option value="ongoing" {% if status_filter == 'ongoing' %}selected{% endif %}>Ongoing</option>
+                            <option value="completed" {% if status_filter == 'completed' %}selected{% endif %}>Completed</option>
+                            <option value="cancelled" {% if status_filter == 'cancelled' %}selected{% endif %}>Cancelled</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Meetings List -->
+                <div class="table-responsive">
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>Title</th>
+                                <th>Date</th>
+                                <th>Venue</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for meeting in meetings %}
+                            <tr>
+                                <td>{{ meeting.title }}</td>
+                                <td>{{ meeting.date|date:"M d, Y H:i" }}</td>
+                                <td>{{ meeting.venue }}</td>
+                                <td>
+                                    <span class="badge bg-{% if meeting.status == 'scheduled' %}primary{% elif meeting.status == 'ongoing' %}warning{% elif meeting.status == 'completed' %}success{% else %}danger{% endif %}">
+                                        {{ meeting.status|upper }}
+                                    </span>
+                                </td>
+                                <td>
+                                    <a href="{% url 'meetings:detail' meeting.id %}" class="btn btn-sm btn-info">
+                                        <i class="fas fa-eye"></i>
+                                    </a>
+                                    <a href="{% url 'meetings:attendance' meeting.id %}" class="btn btn-sm btn-success">
+                                        <i class="fas fa-user-check"></i>
+                                    </a>
+                                    <a href="{% url 'meetings:edit' meeting.id %}" class="btn btn-sm btn-warning">
+                                        <i class="fas fa-edit"></i>
+                                    </a>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="5" class="text-center">No meetings found.</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Pagination -->
+                {% if meetings.has_other_pages %}
+                    <nav aria-label="Page navigation">
+                        <ul class="pagination justify-content-center">
+                            {% if meetings.has_previous %}
+                                <li class="page-item"><a class="page-link" href="?page=1">&laquo;</a></li>
+                                <li class="page-item"><a class="page-link" href="?page={{ meetings.previous_page_number }}">Previous</a></li>
+                            {% endif %}
+                            <li class="page-item active"><span class="page-link">{{ meetings.number }}</span></li>
+                            {% if meetings.has_next %}
+                                <li class="page-item"><a class="page-link" href="?page={{ meetings.next_page_number }}">Next</a></li>
+                                <li class="page-item"><a class="page-link" href="?page={{ meetings.paginator.num_pages }}">&raquo;</a></li>
+                            {% endif %}
+                        </ul>
+                    </nav>
+                {% endif %}
             </div>
         </div>
     </div>

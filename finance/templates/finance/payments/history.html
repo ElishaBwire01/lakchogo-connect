@@ -1,0 +1,97 @@
+{% extends 'base_dashboard.html' %}
+
+{% block title %}Payment History - LakChogo Connect{% endblock %}
+
+{% block dashboard_content %}
+<div class="row">
+    <div class="col-12">
+        <h1 class="h3">Payment History</h1>
+        <p class="text-muted">View payment history with filters</p>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-md-3">
+        <div class="card bg-success text-white">
+            <div class="card-body">
+                <h5>Total Amount</h5>
+                <h2>KES {{ total_amount|floatformat:0 }}</h2>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-primary text-white">
+            <div class="card-body">
+                <h5>Total Transactions</h5>
+                <h2>{{ total_count }}</h2>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-body">
+                <form method="get" class="row g-2">
+                    <div class="col-md-5">
+                        <label class="form-label small">Start Date</label>
+                        <input type="date" class="form-control" name="start_date" value="{{ start_date|default:'' }}">
+                    </div>
+                    <div class="col-md-5">
+                        <label class="form-label small">End Date</label>
+                        <input type="date" class="form-control" name="end_date" value="{{ end_date|default:'' }}">
+                    </div>
+                    <div class="col-md-2 d-flex align-items-end">
+                        <button type="submit" class="btn btn-primary w-100">Filter</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5>Transaction List</h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>Member</th>
+                                <th>Category</th>
+                                <th>Amount</th>
+                                <th>Method</th>
+                                <th>Date</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for payment in payments %}
+                            <tr>
+                                <td>{{ payment.id }}</td>
+                                <td>{{ payment.member.get_full_name }}</td>
+                                <td>{{ payment.category.name }}</td>
+                                <td><strong>KES {{ payment.amount|floatformat:0 }}</strong></td>
+                                <td>{{ payment.get_payment_method_display }}</td>
+                                <td>{{ payment.created_at|date:"M d, Y H:i" }}</td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="6" class="text-center">No payments found.</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                <div class="mt-3">
+                    <a href="{% url 'finance:payment_list' %}" class="btn btn-secondary">
+                        <i class="fas fa-arrow-left"></i> Back to Payments
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

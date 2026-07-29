@@ -2,6 +2,7 @@ from django.db import models
 from django.contrib.auth.models import AbstractUser, Group, Permission
 from django.core.validators import RegexValidator
 from django.utils import timezone
+from django.conf import settings
 
 class User(AbstractUser):
     """Custom User model with phone number and role"""
@@ -86,6 +87,8 @@ class UserRole(models.Model):
         db_table = 'user_roles'
         unique_together = ['user', 'role']
         ordering = ['-assigned_at']
+        verbose_name = 'User Role'
+        verbose_name_plural = 'User Roles'
 
     def __str__(self):
         return f"{self.user.username} - {self.role.name}"
@@ -101,6 +104,7 @@ class UserActivityLog(models.Model):
         ('DELETE', 'Delete'),
         ('VIEW', 'View'),
         ('EXPORT', 'Export'),
+        ('OTHER', 'Other'),
     )
     
     user = models.ForeignKey(User, on_delete=models.CASCADE)
@@ -113,6 +117,8 @@ class UserActivityLog(models.Model):
     class Meta:
         db_table = 'user_activity_logs'
         ordering = ['-timestamp']
+        verbose_name = 'User Activity Log'
+        verbose_name_plural = 'User Activity Logs'
 
     def __str__(self):
         return f"{self.user.username} - {self.action} at {self.timestamp}"

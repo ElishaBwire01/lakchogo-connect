@@ -4,3 +4,6 @@ class WelfareConfig(AppConfig):
     default_auto_field = 'django.db.models.BigAutoField'
     name = 'welfare'
     verbose_name = 'Welfare Management'
+
+    def ready(self):
+        import welfare.signals

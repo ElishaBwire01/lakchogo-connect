@@ -1,0 +1,56 @@
+{% extends 'base_dashboard.html' %}
+
+{% block title %}Treasurer Dashboard - LakChogo Connect{% endblock %}
+
+{% block dashboard_content %}
+<div class="row">
+    <div class="col-12">
+        <h1 class="h3">Treasurer Dashboard</h1>
+        <p class="text-muted">Manage financial transactions</p>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-md-4">
+        <div class="card bg-success text-white">
+            <div class="card-body">
+                <h5>Total Collected</h5>
+                <h2>KES {{ dashboard.payment_stats.total|floatformat:0|default:"0" }}</h2>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card bg-warning text-dark">
+            <div class="card-body">
+                <h5>Pending Payments</h5>
+                <h2>{{ dashboard.pending_payments|default:"0" }}</h2>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card bg-primary text-white">
+            <div class="card-body">
+                <h5>This Month</h5>
+                <h2>KES {{ dashboard.payment_stats.monthly|floatformat:0|default:"0" }}</h2>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5>Quick Actions</h5>
+            </div>
+            <div class="card-body">
+                <a href="{% url 'finance:record_payment' %}" class="btn btn-primary">
+                    <i class="fas fa-plus"></i> Record Payment
+                </a>
+                <a href="{% url 'finance:payment_list' %}" class="btn btn-info">
+                    <i class="fas fa-list"></i> View All Payments
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

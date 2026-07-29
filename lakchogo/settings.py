@@ -1,9 +1,19 @@
+"""
+Django settings for LakChogo Connect project.
+"""
+
 import os
 from pathlib import Path
 from decouple import config
 
+try:
+    import dj_database_url
+except ImportError:
+    dj_database_url = None
+
 BASE_DIR = Path(__file__).resolve().parent.parent
-SECRET_KEY = config('SECRET_KEY', default='django-insecure-your-secret-key-here')
+
+SECRET_KEY = config('SECRET_KEY', default='django-insecure-8c7v*2g=+z!@#x$%^&*()_+{}|:<>?~`1234567890')
 DEBUG = config('DEBUG', default=True, cast=bool)
 ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='localhost,127.0.0.1').split(',')
 
@@ -14,13 +24,18 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    
+    # Third party apps
     'rest_framework',
     'rest_framework.authtoken',
     'corsheaders',
     'crispy_forms',
     'crispy_bootstrap5',
     'django_filters',
-    'accounts.apps.AccountsConfig',
+    'django_extensions',
+    
+    # Local apps
+    'accounts',
     'members',
     'finance',
     'meetings',
@@ -71,11 +86,30 @@ DATABASES = {
     }
 }
 
+if dj_database_url:
+    try:
+        database_url = config('DATABASE_URL', default=None)
+        if database_url:
+            DATABASES['default'] = dj_database_url.config(default=database_url)
+    except:
+        pass
+
 AUTH_PASSWORD_VALIDATORS = [
-    {'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator'},
-    {'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator'},
-    {'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator'},
-    {'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator'},
+    {
+        'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
+    },
+    {
+        'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator',
+        'OPTIONS': {
+            'min_length': 8,
+        }
+    },
+    {
+        'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator',
+    },
+    {
+        'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
+    },
 ]
 
 LANGUAGE_CODE = 'en-us'
@@ -91,6 +125,7 @@ MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
 CRISPY_ALLOWED_TEMPLATE_PACKS = "bootstrap5"
 CRISPY_TEMPLATE_PACK = "bootstrap5"
 
@@ -102,24 +137,25 @@ REST_FRAMEWORK = {
     'DEFAULT_PERMISSION_CLASSES': [
         'rest_framework.permissions.IsAuthenticated',
     ],
+    'DEFAULT_FILTER_BACKENDS': [
+        'django_filters.rest_framework.DjangoFilterBackend',
+    ],
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
     'PAGE_SIZE': 20,
 }
 
 CORS_ALLOW_ALL_ORIGINS = DEBUG
-CORS_ALLOWED_ORIGINS = ["http://localhost:3000", "http://127.0.0.1:3000"]
+CORS_ALLOWED_ORIGINS = [
+    "http://localhost:3000",
+    "http://127.0.0.1:3000",
+    "http://localhost:8000",
+    "http://127.0.0.1:8000",
+]
 
-# Custom User Model
 AUTH_USER_MODEL = 'accounts.User'
 
-# Temporarily comment out custom backend if causing issues
-# AUTHENTICATION_BACKENDS = [
-#     'accounts.backends.PhoneOrUsernameBackend',
-#     'django.contrib.auth.backends.ModelBackend',
-# ]
-
-# Use default backend for now
 AUTHENTICATION_BACKENDS = [
+    'accounts.backends.PhoneOrUsernameBackend',
     'django.contrib.auth.backends.ModelBackend',
 ]
 
@@ -128,3 +164,24 @@ LOGIN_REDIRECT_URL = 'dashboard:index'
 LOGOUT_REDIRECT_URL = 'accounts:login'
 
 EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'handlers': {
+        'console': {
+            'class': 'logging.StreamHandler',
+        },
+    },
+    'root': {
+        'handlers': ['console'],
+        'level': 'INFO',
+    },
+}
+
+LAKCHOGO_SETTINGS = {
+    'GROUP_NAME': 'Lak Chogo Welfare Group',
+    'GROUP_SHORT_NAME': 'LakChogo',
+    'GROUP_EMAIL': 'info@lakchogo.com',
+    'GROUP_PHONE': '+254712345678',
+}

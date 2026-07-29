@@ -2,19 +2,45 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.contrib.auth import get_user_model
-from django.db import models
-from .models import Member
+from django.db.models import Q
+from django.core.paginator import Paginator
+from django.http import JsonResponse
+from django.utils import timezone
+from .models import Member, MemberNote, MemberDocument, MemberContributionSummary
 
 User = get_user_model()
 
 @login_required
 def list_members(request):
-    members = Member.objects.filter(status='active')
+    members = Member.objects.all().order_by('-date_joined')
+    
+    status_filter = request.GET.get('status')
+    if status_filter:
+        members = members.filter(status=status_filter)
+    
+    query = request.GET.get('q')
+    if query:
+        members = members.filter(
+            Q(user__first_name__icontains=query) |
+            Q(user__last_name__icontains=query) |
+            Q(user__phone__icontains=query) |
+            Q(member_id__icontains=query)
+        )
+    
+    paginator = Paginator(members, 20)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+    
     context = {
-        'members': members,
+        'members': page_obj,
         'title': 'Members',
+        'status_filter': status_filter,
+        'query': query,
+        'total_members': Member.objects.count(),
+        'active_members': Member.objects.filter(status='active').count(),
     }
     return render(request, 'members/list.html', context)
+
 
 @login_required
 def register_member(request):
@@ -29,11 +55,15 @@ def register_member(request):
         
         if User.objects.filter(username=username).exists():
             messages.error(request, 'Username already exists.')
-            return render(request, 'members/register.html')
+            return render(request, 'members/register.html', {'title': 'Register Member'})
         
         if User.objects.filter(phone=phone).exists():
             messages.error(request, 'Phone number already exists.')
-            return render(request, 'members/register.html')
+            return render(request, 'members/register.html', {'title': 'Register Member'})
+        
+        if User.objects.filter(id_number=id_number).exists():
+            messages.error(request, 'ID number already exists.')
+            return render(request, 'members/register.html', {'title': 'Register Member'})
         
         user = User.objects.create_user(
             username=username,
@@ -50,25 +80,42 @@ def register_member(request):
             next_of_kin_name=request.POST.get('next_of_kin_name', ''),
             next_of_kin_phone=request.POST.get('next_of_kin_phone', ''),
             next_of_kin_relationship=request.POST.get('next_of_kin_relationship', ''),
+            status='active'
         )
         
-        messages.success(request, f'Member {member.get_full_name()} registered successfully!')
-        return redirect('members:list')
+        MemberContributionSummary.objects.create(member=member)
+        
+        messages.success(request, f'Member {member.get_full_name()} registered successfully! Member ID: {member.member_id}')
+        return redirect('members:detail', member_id=member.member_id)
     
-    return render(request, 'members/register.html', {'title': 'Register Member'})
+    context = {'title': 'Register Member'}
+    return render(request, 'members/register.html', context)
+
 
 @login_required
 def member_detail(request, member_id):
     member = get_object_or_404(Member, member_id=member_id)
+    notes = member.member_notes_list.all().order_by('-created_at')[:10]  # Updated related_name
+    
+    try:
+        summary = member.contribution_summary
+    except MemberContributionSummary.DoesNotExist:
+        summary = MemberContributionSummary.objects.create(member=member)
+        summary.update_summary()
+    
     context = {
         'member': member,
+        'notes': notes,
+        'summary': summary,
         'title': f'Member: {member.get_full_name()}',
     }
     return render(request, 'members/detail.html', context)
 
+
 @login_required
 def edit_member(request, member_id):
     member = get_object_or_404(Member, member_id=member_id)
+    
     if request.method == 'POST':
         user = member.user
         user.first_name = request.POST.get('first_name')
@@ -77,10 +124,22 @@ def edit_member(request, member_id):
         user.email = request.POST.get('email')
         user.save()
         
+        member.date_of_birth = request.POST.get('date_of_birth') or None
+        member.gender = request.POST.get('gender')
+        member.occupation = request.POST.get('occupation')
+        member.address = request.POST.get('address')
+        
         member.next_of_kin_name = request.POST.get('next_of_kin_name', '')
         member.next_of_kin_phone = request.POST.get('next_of_kin_phone', '')
         member.next_of_kin_relationship = request.POST.get('next_of_kin_relationship', '')
+        member.next_of_kin_address = request.POST.get('next_of_kin_address', '')
+        
+        member.emergency_contact_name = request.POST.get('emergency_contact_name', '')
+        member.emergency_contact_phone = request.POST.get('emergency_contact_phone', '')
+        member.emergency_contact_relationship = request.POST.get('emergency_contact_relationship', '')
+        
         member.status = request.POST.get('status', 'active')
+        member.notes = request.POST.get('notes', '')
         member.save()
         
         messages.success(request, 'Member updated successfully!')
@@ -92,20 +151,122 @@ def edit_member(request, member_id):
     }
     return render(request, 'members/edit.html', context)
 
+
 @login_required
 def search_members(request):
     query = request.GET.get('q', '')
     members = Member.objects.filter(status='active')
+    
     if query:
         members = members.filter(
-            models.Q(user__first_name__icontains=query) |
-            models.Q(user__last_name__icontains=query) |
-            models.Q(user__phone__icontains=query) |
-            models.Q(member_id__icontains=query)
+            Q(user__first_name__icontains=query) |
+            Q(user__last_name__icontains=query) |
+            Q(user__phone__icontains=query) |
+            Q(member_id__icontains=query)
         )
+    
     context = {
         'members': members,
         'query': query,
         'title': 'Search Members',
     }
     return render(request, 'members/search.html', context)
+
+
+@login_required
+def add_note(request, member_id):
+    member = get_object_or_404(Member, member_id=member_id)
+    
+    if request.method == 'POST':
+        content = request.POST.get('content')
+        is_private = request.POST.get('is_private') == 'on'
+        
+        if content:
+            MemberNote.objects.create(
+                member=member,
+                author=request.user,
+                content=content,
+                is_private=is_private
+            )
+            messages.success(request, 'Note added successfully!')
+        else:
+            messages.error(request, 'Note content is required.')
+        
+        return redirect('members:detail', member_id=member.member_id)
+    
+    context = {
+        'member': member,
+        'title': 'Add Note',
+    }
+    return render(request, 'members/add_note.html', context)
+
+
+@login_required
+def member_status(request, member_id):
+    member = get_object_or_404(Member, member_id=member_id)
+    try:
+        summary = member.contribution_summary
+    except MemberContributionSummary.DoesNotExist:
+        summary = MemberContributionSummary.objects.create(member=member)
+        summary.update_summary()
+    
+    context = {
+        'member': member,
+        'summary': summary,
+        'title': f'Status: {member.get_full_name()}',
+    }
+    return render(request, 'members/status.html', context)
+
+
+@login_required
+def get_member_json(request, member_id):
+    member = get_object_or_404(Member, member_id=member_id)
+    
+    data = {
+        'member_id': member.member_id,
+        'name': member.get_full_name(),
+        'phone': member.user.phone,
+        'email': member.user.email,
+        'status': member.status,
+        'compliance_status': member.compliance_status,
+        'date_joined': member.date_joined.isoformat(),
+    }
+    return JsonResponse(data)
+
+
+@login_required
+def get_members_json(request):
+    members = Member.objects.filter(status='active')
+    data = []
+    
+    for member in members:
+        data.append({
+            'member_id': member.member_id,
+            'name': member.get_full_name(),
+            'phone': member.user.phone,
+            'status': member.status,
+        })
+    
+    return JsonResponse({'members': data})
+
+
+@login_required
+def update_status(request, member_id):
+    member = get_object_or_404(Member, member_id=member_id)
+    
+    if request.method == 'POST':
+        new_status = request.POST.get('status')
+        if new_status in ['active', 'inactive', 'suspended', 'pending']:
+            member.status = new_status
+            member.save()
+            messages.success(request, f'Member status updated to {new_status}.')
+        else:
+            messages.error(request, 'Invalid status.')
+        
+        return redirect('members:detail', member_id=member.member_id)
+    
+    context = {
+        'member': member,
+        'title': 'Update Status',
+    }
+    return render(request, 'members/update_status.html', context)

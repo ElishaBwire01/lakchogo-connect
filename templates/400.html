@@ -1,0 +1,16 @@
+{% extends 'base.html' %}
+
+{% block title %}Bad Request - LakChogo Connect{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center" style="margin-top: 100px;">
+    <div class="col-md-6 text-center">
+        <h1 class="display-1 text-warning">400</h1>
+        <h2 class="mb-4">Bad Request</h2>
+        <p class="lead">{{ message|default:"The request could not be understood due to malformed syntax." }}</p>
+        <a href="{% url 'dashboard:index' %}" class="btn btn-primary">
+            <i class="fas fa-home"></i> Go to Dashboard
+        </a>
+    </div>
+</div>
+{% endblock %}

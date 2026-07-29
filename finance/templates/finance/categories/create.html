@@ -1,0 +1,77 @@
+{% extends 'base_dashboard.html' %}
+
+{% block title %}Create Payment Category - LakChogo Connect{% endblock %}
+
+{% block dashboard_content %}
+<div class="row">
+    <div class="col-12">
+        <h1 class="h3">Create Payment Category</h1>
+        <p class="text-muted">Create a new payment category</p>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-md-8 mx-auto">
+        <div class="card">
+            <div class="card-body">
+                <form method="post">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label class="form-label">Category Name <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" name="name" placeholder="e.g., Yearly Subscription" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Description</label>
+                        <textarea class="form-control" name="description" rows="3" placeholder="Describe this payment category"></textarea>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Default Amount (KES) <span class="text-danger">*</span></label>
+                            <input type="number" class="form-control" name="default_amount" step="0.01" placeholder="500" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Frequency</label>
+                            <select class="form-select" name="frequency">
+                                <option value="one-time">One-Time</option>
+                                <option value="monthly">Monthly</option>
+                                <option value="quarterly">Quarterly</option>
+                                <option value="yearly">Yearly</option>
+                                <option value="weekly">Weekly</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <div class="form-check">
+                            <input type="checkbox" class="form-check-input" id="is_mandatory" name="is_mandatory">
+                            <label class="form-check-label" for="is_mandatory">
+                                Mandatory for Welfare Eligibility
+                            </label>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Color</label>
+                            <select class="form-select" name="color">
+                                <option value="primary">Primary (Blue)</option>
+                                <option value="success">Success (Green)</option>
+                                <option value="warning">Warning (Yellow)</option>
+                                <option value="danger">Danger (Red)</option>
+                                <option value="info">Info (Cyan)</option>
+                                <option value="secondary">Secondary (Gray)</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Icon</label>
+                            <input type="text" class="form-control" name="icon" placeholder="fa-money-bill" value="fa-money-bill">
+                        </div>
+                    </div>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save"></i> Create Category
+                    </button>
+                    <a href="{% url 'finance:category_list' %}" class="btn btn-secondary">Cancel</a>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

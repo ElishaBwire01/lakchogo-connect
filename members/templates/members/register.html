@@ -16,33 +16,35 @@
             <div class="card-body">
                 <form method="post">
                     {% csrf_token %}
+                    <h5>Personal Information</h5>
+                    <hr>
                     <div class="row">
                         <div class="col-md-6 mb-3">
-                            <label class="form-label">Username</label>
+                            <label class="form-label">Username <span class="text-danger">*</span></label>
                             <input type="text" class="form-control" name="username" required>
                         </div>
                         <div class="col-md-6 mb-3">
-                            <label class="form-label">Password</label>
+                            <label class="form-label">Password <span class="text-danger">*</span></label>
                             <input type="password" class="form-control" name="password" required>
                         </div>
                     </div>
                     <div class="row">
                         <div class="col-md-6 mb-3">
-                            <label class="form-label">First Name</label>
+                            <label class="form-label">First Name <span class="text-danger">*</span></label>
                             <input type="text" class="form-control" name="first_name" required>
                         </div>
                         <div class="col-md-6 mb-3">
-                            <label class="form-label">Last Name</label>
+                            <label class="form-label">Last Name <span class="text-danger">*</span></label>
                             <input type="text" class="form-control" name="last_name" required>
                         </div>
                     </div>
                     <div class="row">
                         <div class="col-md-6 mb-3">
-                            <label class="form-label">Phone Number</label>
+                            <label class="form-label">Phone Number <span class="text-danger">*</span></label>
                             <input type="text" class="form-control" name="phone" placeholder="+254712345678" required>
                         </div>
                         <div class="col-md-6 mb-3">
-                            <label class="form-label">ID Number</label>
+                            <label class="form-label">ID Number <span class="text-danger">*</span></label>
                             <input type="text" class="form-control" name="id_number" required>
                         </div>
                     </div>
@@ -50,8 +52,32 @@
                         <label class="form-label">Email</label>
                         <input type="email" class="form-control" name="email">
                     </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Date of Birth</label>
+                            <input type="date" class="form-control" name="date_of_birth">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Gender</label>
+                            <select class="form-select" name="gender">
+                                <option value="">Select</option>
+                                <option value="male">Male</option>
+                                <option value="female">Female</option>
+                                <option value="other">Other</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Occupation</label>
+                        <input type="text" class="form-control" name="occupation">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Address</label>
+                        <textarea class="form-control" name="address" rows="2"></textarea>
+                    </div>
+
+                    <h5 class="mt-4">Next of Kin Information</h5>
                     <hr>
-                    <h5>Next of Kin Information</h5>
                     <div class="row">
                         <div class="col-md-6 mb-3">
                             <label class="form-label">Next of Kin Name</label>
@@ -66,7 +92,27 @@
                         <label class="form-label">Relationship</label>
                         <input type="text" class="form-control" name="next_of_kin_relationship">
                     </div>
-                    <button type="submit" class="btn btn-primary">Register Member</button>
+
+                    <h5 class="mt-4">Emergency Contact</h5>
+                    <hr>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Emergency Contact Name</label>
+                            <input type="text" class="form-control" name="emergency_contact_name">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Emergency Contact Phone</label>
+                            <input type="text" class="form-control" name="emergency_contact_phone" placeholder="+254712345678">
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Relationship</label>
+                        <input type="text" class="form-control" name="emergency_contact_relationship">
+                    </div>
+
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-user-plus"></i> Register Member
+                    </button>
                     <a href="{% url 'members:list' %}" class="btn btn-secondary">Cancel</a>
                 </form>
             </div>

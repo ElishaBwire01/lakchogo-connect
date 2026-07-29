@@ -17,26 +17,41 @@
                 <form method="post">
                     {% csrf_token %}
                     <div class="mb-3">
-                        <label class="form-label">Member ID</label>
-                        <input type="text" class="form-control" name="member_id" placeholder="LCG-0001" required>
+                        <label class="form-label">Member <span class="text-danger">*</span></label>
+                        <select class="form-select" name="member_id" required>
+                            <option value="">Select Member</option>
+                            {% for member in members %}
+                            <option value="{{ member.member_id }}">{{ member.get_full_name }} ({{ member.member_id }})</option>
+                            {% endfor %}
+                        </select>
                     </div>
                     <div class="mb-3">
-                        <label class="form-label">Deceased Name</label>
+                        <label class="form-label">Deceased Name <span class="text-danger">*</span></label>
                         <input type="text" class="form-control" name="deceased_name" required>
                     </div>
                     <div class="mb-3">
-                        <label class="form-label">Relationship</label>
-                        <input type="text" class="form-control" name="relationship" required>
+                        <label class="form-label">Relationship <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" name="relationship" placeholder="e.g., Mother, Father, Spouse" required>
                     </div>
                     <div class="mb-3">
-                        <label class="form-label">Date of Death</label>
+                        <label class="form-label">Date of Death <span class="text-danger">*</span></label>
                         <input type="date" class="form-control" name="date_of_death" required>
                     </div>
                     <div class="mb-3">
-                        <label class="form-label">Collection Target (KES)</label>
-                        <input type="number" class="form-control" name="collection_target" step="0.01" required>
+                        <label class="form-label">Date of Burial</label>
+                        <input type="date" class="form-control" name="date_of_burial">
                     </div>
-                    <button type="submit" class="btn btn-primary">Create Event</button>
+                    <div class="mb-3">
+                        <label class="form-label">Collection Target <span class="text-danger">*</span></label>
+                        <input type="number" class="form-control" name="collection_target" step="0.01" placeholder="50000" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Description</label>
+                        <textarea class="form-control" name="description" rows="3"></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save"></i> Create Event
+                    </button>
                     <a href="{% url 'welfare:index' %}" class="btn btn-secondary">Cancel</a>
                 </form>
             </div>

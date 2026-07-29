@@ -1,0 +1,54 @@
+{% extends 'base_dashboard.html' %}
+
+{% block title %}Edit Meeting - {{ meeting.title }}{% endblock %}
+
+{% block dashboard_content %}
+<div class="row">
+    <div class="col-12">
+        <h1 class="h3">Edit Meeting: {{ meeting.title }}</h1>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-md-8 mx-auto">
+        <div class="card">
+            <div class="card-body">
+                <form method="post">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label class="form-label">Title <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" name="title" value="{{ meeting.title }}" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Description</label>
+                        <textarea class="form-control" name="description" rows="3">{{ meeting.description }}</textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Date & Time <span class="text-danger">*</span></label>
+                        <input type="datetime-local" class="form-control" name="date" value="{{ meeting.date|date:'Y-m-d\TH:i' }}" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Venue <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" name="venue" value="{{ meeting.venue }}" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Agenda</label>
+                        <textarea class="form-control" name="agenda" rows="4">{{ meeting.agenda }}</textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Status</label>
+                        <select class="form-select" name="status">
+                            <option value="scheduled" {% if meeting.status == 'scheduled' %}selected{% endif %}>Scheduled</option>
+                            <option value="ongoing" {% if meeting.status == 'ongoing' %}selected{% endif %}>Ongoing</option>
+                            <option value="completed" {% if meeting.status == 'completed' %}selected{% endif %}>Completed</option>
+                            <option value="cancelled" {% if meeting.status == 'cancelled' %}selected{% endif %}>Cancelled</option>
+                        </select>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Update Meeting</button>
+                    <a href="{% url 'meetings:detail' meeting.id %}" class="btn btn-secondary">Cancel</a>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

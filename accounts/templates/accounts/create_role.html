@@ -6,8 +6,10 @@
 <div class="row">
     <div class="col-12">
         <h1 class="h3">Create New Role</h1>
+        <p class="text-muted">Create a new system role</p>
     </div>
 </div>
+
 <div class="row mt-4">
     <div class="col-md-6">
         <div class="card">
@@ -15,14 +17,20 @@
                 <form method="post">
                     {% csrf_token %}
                     <div class="mb-3">
-                        <label class="form-label">Role Name</label>
-                        <input type="text" class="form-control" name="name" required>
+                        <label class="form-label">Role Name <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" name="name" placeholder="e.g., Supervisor" required>
                     </div>
                     <div class="mb-3">
                         <label class="form-label">Description</label>
-                        <textarea class="form-control" name="description" rows="3"></textarea>
+                        <textarea class="form-control" name="description" rows="3" placeholder="Describe the role's responsibilities"></textarea>
                     </div>
-                    <button type="submit" class="btn btn-primary">Create Role</button>
+                    <div class="mb-3 form-check">
+                        <input type="checkbox" class="form-check-input" id="is_default" name="is_default">
+                        <label class="form-check-label" for="is_default">Set as default role for new users</label>
+                    </div>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save"></i> Create Role
+                    </button>
                     <a href="{% url 'accounts:manage_roles' %}" class="btn btn-secondary">Cancel</a>
                 </form>
             </div>

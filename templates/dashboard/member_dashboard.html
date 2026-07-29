@@ -1,0 +1,49 @@
+{% extends 'base_dashboard.html' %}
+
+{% block title %}Member Dashboard - LakChogo Connect{% endblock %}
+
+{% block dashboard_content %}
+<div class="row">
+    <div class="col-12">
+        <h1 class="h3">Member Dashboard</h1>
+        <p class="text-muted">Welcome, {{ user.get_full_name }}!</p>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5>Your Profile</h5>
+            </div>
+            <div class="card-body">
+                <p><strong>Member ID:</strong> {{ dashboard.member_profile.member_id|default:"Not assigned" }}</p>
+                <p><strong>Status:</strong> 
+                    <span class="badge bg-{% if dashboard.member_profile.status == 'active' %}success{% else %}danger{% endif %}">
+                        {{ dashboard.member_profile.status|default:"Pending"|upper }}
+                    </span>
+                </p>
+                <p><strong>Compliance:</strong>
+                    <span class="badge bg-{% if dashboard.member_profile.compliance == 'green' %}success{% elif dashboard.member_profile.compliance == 'yellow' %}warning{% else %}danger{% endif %}">
+                        {{ dashboard.member_profile.compliance|default:"Unknown"|upper }}
+                    </span>
+                </p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5>Quick Actions</h5>
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    <a href="#" class="btn btn-primary">Make Payment</a>
+                    <a href="#" class="btn btn-success">View My Contributions</a>
+                    <a href="#" class="btn btn-info">Check Compliance Status</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

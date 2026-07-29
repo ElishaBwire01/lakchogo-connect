@@ -1,0 +1,45 @@
+{% extends 'base_dashboard.html' %}
+
+{% block title %}Resolve Alert - LakChogo Connect{% endblock %}
+
+{% block dashboard_content %}
+<div class="row">
+    <div class="col-12">
+        <h1 class="h3">Resolve Compliance Alert</h1>
+        <p class="text-muted">Resolve alert for {{ alert.member.get_full_name }}</p>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-md-6 mx-auto">
+        <div class="card">
+            <div class="card-header">
+                <h5>Alert Details</h5>
+            </div>
+            <div class="card-body">
+                <p><strong>Member:</strong> {{ alert.member.get_full_name }} ({{ alert.member.member_id }})</p>
+                <p><strong>Type:</strong> {{ alert.get_alert_type_display }}</p>
+                <p><strong>Priority:</strong> 
+                    <span class="badge bg-{% if alert.priority == 'urgent' %}danger{% elif alert.priority == 'high' %}warning{% else %}info{% endif %}">
+                        {{ alert.get_priority_display }}
+                    </span>
+                </p>
+                <p><strong>Message:</strong> {{ alert.message }}</p>
+                <p><strong>Created:</strong> {{ alert.created_at|date:"F d, Y H:i" }}</p>
+                <hr>
+                <form method="post">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label class="form-label">Resolution Notes</label>
+                        <textarea class="form-control" name="notes" rows="3" placeholder="Describe how this alert was resolved"></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-success">
+                        <i class="fas fa-check"></i> Resolve Alert
+                    </button>
+                    <a href="{% url 'compliance:alerts' %}" class="btn btn-secondary">Cancel</a>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

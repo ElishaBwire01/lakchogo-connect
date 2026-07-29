@@ -2,6 +2,10 @@ from django.shortcuts import render
 from django.contrib.auth.decorators import login_required
 from django.contrib.admin.views.decorators import staff_member_required
 from .services import DashboardService
+from django.utils import timezone
+from django.http import HttpResponseNotFound, HttpResponseForbidden, HttpResponseBadRequest
+from finance.models import Payment
+from meetings.models import Meeting
 
 @login_required
 def index(request):
@@ -61,7 +65,6 @@ def treasurer_dashboard(request):
     """Treasurer dashboard"""
     dashboard_data = DashboardService.get_user_dashboard_data(request.user)
     
-    # Add treasurer-specific data
     from finance.models import PaymentCategory
     
     dashboard_data['payment_categories'] = PaymentCategory.objects.filter(is_active=True)
@@ -82,9 +85,6 @@ def secretary_dashboard(request):
     """Secretary dashboard"""
     dashboard_data = DashboardService.get_user_dashboard_data(request.user)
     
-    # Add secretary-specific data
-    from meetings.models import Meeting
-    
     dashboard_data['upcoming_meetings'] = Meeting.objects.filter(
         date__gte=timezone.now(),
         status='scheduled'
@@ -103,7 +103,6 @@ def welfare_dashboard(request):
     """Welfare officer dashboard"""
     dashboard_data = DashboardService.get_user_dashboard_data(request.user)
     
-    # Add welfare-specific data
     from welfare.models import BereavementEvent
     
     dashboard_data['active_events'] = BereavementEvent.objects.filter(
@@ -118,11 +117,45 @@ def welfare_dashboard(request):
     return render(request, 'dashboard/welfare_dashboard.html', context)
 
 
-def handler404(request, exception):
-    """Custom 404 error handler"""
-    return render(request, '404.html', {'title': 'Page Not Found'}, status=404)
+# ============================================
+# ERROR HANDLERS
+# ============================================
+
+def handler400(request, exception=None):
+    """Custom 400 Bad Request error handler"""
+    context = {
+        'title': 'Bad Request - 400',
+        'message': 'The request could not be understood due to malformed syntax.',
+        'error_code': 400,
+    }
+    return render(request, '400.html', context, status=400)
+
+
+def handler403(request, exception=None):
+    """Custom 403 Forbidden error handler"""
+    context = {
+        'title': 'Forbidden - 403',
+        'message': 'You do not have permission to access this page.',
+        'error_code': 403,
+    }
+    return render(request, '403.html', context, status=403)
+
+
+def handler404(request, exception=None):
+    """Custom 404 Not Found error handler"""
+    context = {
+        'title': 'Page Not Found - 404',
+        'message': 'The page you are looking for could not be found.',
+        'error_code': 404,
+    }
+    return render(request, '404.html', context, status=404)
 
 
 def handler500(request):
-    """Custom 500 error handler"""
-    return render(request, '500.html', {'title': 'Server Error'}, status=500)
+    """Custom 500 Server Error handler"""
+    context = {
+        'title': 'Server Error - 500',
+        'message': 'An internal server error occurred. Please try again later.',
+        'error_code': 500,
+    }
+    return render(request, '500.html', context, status=500)

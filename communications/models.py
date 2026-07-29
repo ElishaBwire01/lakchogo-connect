@@ -32,7 +32,9 @@ class Notification(BaseModel):
     recipient = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
-        related_name='notifications'
+        related_name='notifications',
+        null=True,
+        blank=True
     )
     notification_type = models.CharField(max_length=50, choices=NOTIFICATION_TYPES)
     title = models.CharField(max_length=200)
@@ -57,7 +59,9 @@ class Notification(BaseModel):
         verbose_name_plural = 'Notifications'
     
     def __str__(self):
-        return f"{self.title} - {self.recipient.get_full_name()}"
+        if self.recipient:
+            return f"{self.title} - {self.recipient.get_full_name()}"
+        return f"{self.title} - No recipient"
     
     def mark_as_read(self):
         self.status = 'read'

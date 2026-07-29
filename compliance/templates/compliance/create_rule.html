@@ -1,0 +1,73 @@
+{% extends 'base_dashboard.html' %}
+
+{% block title %}Create Compliance Rule - LakChogo Connect{% endblock %}
+
+{% block dashboard_content %}
+<div class="row">
+    <div class="col-12">
+        <h1 class="h3">Create Compliance Rule</h1>
+        <p class="text-muted">Create a new compliance rule</p>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-md-8 mx-auto">
+        <div class="card">
+            <div class="card-body">
+                <form method="post">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label class="form-label">Rule Name <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" name="name" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Description</label>
+                        <textarea class="form-control" name="description" rows="3"></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Rule Type <span class="text-danger">*</span></label>
+                        <select class="form-select" name="rule_type" required>
+                            <option value="payment">Payment</option>
+                            <option value="attendance">Attendance</option>
+                            <option value="combined">Combined</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Target Category (for payment rules)</label>
+                        <select class="form-select" name="target_category">
+                            <option value="">Select Category</option>
+                            {% for category in categories %}
+                            <option value="{{ category.id }}">{{ category.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Min Attendance %</label>
+                            <input type="number" class="form-control" name="min_attendance" step="0.01" value="75">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Grace Period (days)</label>
+                            <input type="number" class="form-control" name="grace_period" value="30">
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Penalty Points</label>
+                            <input type="number" class="form-control" name="penalty_points" step="0.01" value="10">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Order</label>
+                            <input type="number" class="form-control" name="order" value="0">
+                        </div>
+                    </div>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save"></i> Create Rule
+                    </button>
+                    <a href="{% url 'compliance:rules' %}" class="btn btn-secondary">Cancel</a>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

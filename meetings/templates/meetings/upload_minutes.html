@@ -1,0 +1,41 @@
+{% extends 'base_dashboard.html' %}
+
+{% block title %}Upload Minutes - {{ meeting.title }}{% endblock %}
+
+{% block dashboard_content %}
+<div class="row">
+    <div class="col-12">
+        <h1 class="h3">Upload Minutes for "{{ meeting.title }}"</h1>
+        <p class="text-muted">Add meeting minutes and notes</p>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-md-8 mx-auto">
+        <div class="card">
+            <div class="card-body">
+                <form method="post" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label class="form-label">Minutes Text <span class="text-danger">*</span></label>
+                        <textarea class="form-control" name="minutes_text" rows="8" required>{% if meeting.minutes_text %}{{ meeting.minutes_text }}{% endif %}</textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Summary</label>
+                        <textarea class="form-control" name="summary" rows="3"></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Upload File</label>
+                        <input type="file" class="form-control" name="file" accept=".pdf,.doc,.docx,.txt">
+                        <small class="text-muted">PDF, Word, or Text files</small>
+                    </div>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-upload"></i> Upload Minutes
+                    </button>
+                    <a href="{% url 'meetings:detail' meeting.id %}" class="btn btn-secondary">Cancel</a>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

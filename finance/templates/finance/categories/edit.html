@@ -1,0 +1,82 @@
+{% extends 'base_dashboard.html' %}
+
+{% block title %}Edit Category - {{ category.name }}{% endblock %}
+
+{% block dashboard_content %}
+<div class="row">
+    <div class="col-12">
+        <h1 class="h3">Edit Category: {{ category.name }}</h1>
+        <p class="text-muted">Update payment category details</p>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-md-8 mx-auto">
+        <div class="card">
+            <div class="card-body">
+                <form method="post">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label class="form-label">Category Name <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" name="name" value="{{ category.name }}" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Description</label>
+                        <textarea class="form-control" name="description" rows="3">{{ category.description }}</textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Default Amount (KES) <span class="text-danger">*</span></label>
+                        <input type="number" class="form-control" name="default_amount" step="0.01" value="{{ category.default_amount }}" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Frequency</label>
+                        <select class="form-select" name="frequency">
+                            <option value="one-time" {% if category.frequency == 'one-time' %}selected{% endif %}>One-Time</option>
+                            <option value="monthly" {% if category.frequency == 'monthly' %}selected{% endif %}>Monthly</option>
+                            <option value="quarterly" {% if category.frequency == 'quarterly' %}selected{% endif %}>Quarterly</option>
+                            <option value="yearly" {% if category.frequency == 'yearly' %}selected{% endif %}>Yearly</option>
+                            <option value="weekly" {% if category.frequency == 'weekly' %}selected{% endif %}>Weekly</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <div class="form-check">
+                            <input type="checkbox" class="form-check-input" id="is_mandatory" name="is_mandatory" {% if category.is_mandatory_for_welfare %}checked{% endif %}>
+                            <label class="form-check-label" for="is_mandatory">
+                                Mandatory for Welfare Eligibility
+                            </label>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Color</label>
+                        <select class="form-select" name="color">
+                            <option value="primary" {% if category.color == 'primary' %}selected{% endif %}>Primary (Blue)</option>
+                            <option value="success" {% if category.color == 'success' %}selected{% endif %}>Success (Green)</option>
+                            <option value="warning" {% if category.color == 'warning' %}selected{% endif %}>Warning (Yellow)</option>
+                            <option value="danger" {% if category.color == 'danger' %}selected{% endif %}>Danger (Red)</option>
+                            <option value="info" {% if category.color == 'info' %}selected{% endif %}>Info (Cyan)</option>
+                            <option value="secondary" {% if category.color == 'secondary' %}selected{% endif %}>Secondary (Gray)</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Icon</label>
+                        <input type="text" class="form-control" name="icon" value="{{ category.icon }}">
+                        <small class="text-muted">Font Awesome icon class</small>
+                    </div>
+                    <div class="mb-3">
+                        <div class="form-check">
+                            <input type="checkbox" class="form-check-input" id="is_active" name="is_active" {% if category.is_active %}checked{% endif %}>
+                            <label class="form-check-label" for="is_active">
+                                Active
+                            </label>
+                        </div>
+                    </div>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save"></i> Update Category
+                    </button>
+                    <a href="{% url 'finance:category_list' %}" class="btn btn-secondary">Cancel</a>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

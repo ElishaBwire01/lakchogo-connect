@@ -1,0 +1,79 @@
+{% extends 'base_dashboard.html' %}
+
+{% block title %}Reports - LakChogo Connect{% endblock %}
+
+{% block dashboard_content %}
+<div class="row">
+    <div class="col-12">
+        <h1 class="h3">Reports & Analytics</h1>
+        <p class="text-muted">Generate and view reports for your welfare group</p>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <!-- Report Cards -->
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-body text-center">
+                <i class="fas fa-users fa-3x text-primary mb-3"></i>
+                <h5>Member Report</h5>
+                <p class="text-muted">View all members and their status</p>
+                <a href="#" class="btn btn-primary">Generate</a>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-body text-center">
+                <i class="fas fa-money-bill-wave fa-3x text-success mb-3"></i>
+                <h5>Payment Report</h5>
+                <p class="text-muted">View all payments and contributions</p>
+                <a href="#" class="btn btn-success">Generate</a>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-body text-center">
+                <i class="fas fa-calendar fa-3x text-warning mb-3"></i>
+                <h5>Attendance Report</h5>
+                <p class="text-muted">View meeting attendance records</p>
+                <a href="#" class="btn btn-warning">Generate</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-body text-center">
+                <i class="fas fa-check-circle fa-3x text-info mb-3"></i>
+                <h5>Compliance Report</h5>
+                <p class="text-muted">View member compliance status</p>
+                <a href="#" class="btn btn-info">Generate</a>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-body text-center">
+                <i class="fas fa-heart fa-3x text-danger mb-3"></i>
+                <h5>Welfare Report</h5>
+                <p class="text-muted">View welfare events and contributions</p>
+                <a href="#" class="btn btn-danger">Generate</a>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-body text-center">
+                <i class="fas fa-file-pdf fa-3x text-secondary mb-3"></i>
+                <h5>Export Reports</h5>
+                <p class="text-muted">Export reports as PDF or Excel</p>
+                <a href="#" class="btn btn-secondary">Export</a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

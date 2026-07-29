@@ -1,0 +1,51 @@
+{% extends 'base_dashboard.html' %}
+
+{% block title %}Welfare Dashboard - LakChogo Connect{% endblock %}
+
+{% block dashboard_content %}
+<div class="row">
+    <div class="col-12">
+        <h1 class="h3">Welfare Dashboard</h1>
+        <p class="text-muted">Manage welfare and bereavement events</p>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5>Active Events</h5>
+            </div>
+            <div class="card-body">
+                <p class="text-muted">{{ dashboard.active_events|length|default:"0" }} active events</p>
+                {% for event in dashboard.active_events %}
+                    <div class="alert alert-info">
+                        <strong>{{ event.deceased_name }}</strong>
+                        <span class="badge bg-success float-end">{{ event.progress_percentage|floatformat:0 }}%</span>
+                        <div class="progress mt-2">
+                            <div class="progress-bar" role="progressbar" style="width: {{ event.progress_percentage }}%"></div>
+                        </div>
+                    </div>
+                {% empty %}
+                    <p>No active welfare events.</p>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5>Quick Actions</h5>
+            </div>
+            <div class="card-body">
+                <a href="{% url 'welfare:create' %}" class="btn btn-danger w-100 mb-2">
+                    <i class="fas fa-heart"></i> Create Welfare Event
+                </a>
+                <a href="{% url 'welfare:index' %}" class="btn btn-info w-100">
+                    <i class="fas fa-list"></i> View All Events
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

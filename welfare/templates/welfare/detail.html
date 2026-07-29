@@ -1,64 +1,118 @@
 {% extends 'base_dashboard.html' %}
 
-{% block title %}Event Detail - LakChogo Connect{% endblock %}
+{% block title %}{{ event.deceased_name }} - Welfare Event{% endblock %}
 
 {% block dashboard_content %}
 <div class="row">
     <div class="col-12">
-        <h1 class="h3">Event: {{ event.deceased_name }}</h1>
-        <p class="text-muted">Welfare event details</p>
+        <div class="d-flex justify-content-between align-items-center">
+            <h1 class="h3">{{ event.event_code }} - {{ event.deceased_name }}</h1>
+            <div>
+                <a href="{% url 'welfare:add_contribution' event.id %}" class="btn btn-success">
+                    <i class="fas fa-plus"></i> Add Contribution
+                </a>
+                <a href="{% url 'welfare:approve_event' event.id %}" class="btn btn-warning">
+                    <i class="fas fa-check"></i> Approve/Close
+                </a>
+                <a href="{% url 'welfare:index' %}" class="btn btn-secondary">Back</a>
+            </div>
+        </div>
+        <p class="text-muted">{{ event.member.get_full_name }} - {{ event.relationship }}</p>
     </div>
 </div>
 
 <div class="row mt-4">
     <div class="col-md-6">
         <div class="card">
+            <div class="card-header">
+                <h5>Event Details</h5>
+            </div>
             <div class="card-body">
                 <table class="table">
-                    <tr>
-                        <th>Member:</th>
-                        <td>{{ event.member.get_full_name }}</td>
-                    </tr>
-                    <tr>
-                        <th>Deceased:</th>
-                        <td>{{ event.deceased_name }}</td>
-                    </tr>
-                    <tr>
-                        <th>Relationship:</th>
-                        <td>{{ event.relationship }}</td>
-                    </tr>
-                    <tr>
-                        <th>Date of Death:</th>
-                        <td>{{ event.date_of_death|date:"F d, Y" }}</td>
-                    </tr>
-                    <tr>
-                        <th>Collection Target:</th>
-                        <td>KES {{ event.collection_target }}</td>
-                    </tr>
-                    <tr>
-                        <th>Amount Collected:</th>
-                        <td>KES {{ event.amount_collected }}</td>
-                    </tr>
-                    <tr>
-                        <th>Progress:</th>
+                    <tr><th>Event Code:</th><td>{{ event.event_code }}</td></tr>
+                    <tr><th>Member:</th><td>{{ event.member.get_full_name }}</td></tr>
+                    <tr><th>Deceased:</th><td>{{ event.deceased_name }}</td></tr>
+                    <tr><th>Relationship:</th><td>{{ event.relationship }}</td></tr>
+                    <tr><th>Date of Death:</th><td>{{ event.date_of_death|date:"F d, Y" }}</td></tr>
+                    <tr><th>Date of Burial:</th><td>{{ event.date_of_burial|date:"F d, Y"|default:"Not set" }}</td></tr>
+                    <tr><th>Status:</th>
                         <td>
-                            <div class="progress">
-                                <div class="progress-bar" role="progressbar" style="width: {{ event.progress_percentage }}%">
-                                    {{ event.progress_percentage|floatformat:0 }}%
-                                </div>
-                            </div>
-                        </td>
-                    </tr>
-                    <tr>
-                        <th>Status:</th>
-                        <td>
-                            <span class="badge bg-{% if event.status == 'active' %}success{% elif event.status == 'closed' %}warning{% else %}info{% endif %}">
+                            <span class="badge bg-{% if event.status == 'active' %}success{% elif event.status == 'closed' %}warning{% elif event.status == 'disbursed' %}info{% else %}danger{% endif %}">
                                 {{ event.status|upper }}
                             </span>
                         </td>
                     </tr>
+                    <tr><th>Description:</th><td>{{ event.description|default:"No description" }}</td></tr>
                 </table>
-                <a href="{% url 'welfare:index' %}" class="btn btn-secondary">Back</a>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5>Collection Progress</h5>
+            </div>
+            <div class="card-body">
+                <div class="text-center">
+                    <h2 class="display-4 text-{% if progress >= 100 %}success{% elif progress >= 50 %}warning{% else %}danger{% endif %}">
+                        {{ progress|floatformat:0 }}%
+                    </h2>
+                    <div class="progress" style="height: 30px;">
+                        <div class="progress-bar bg-{% if progress >= 100 %}success{% elif progress >= 50 %}warning{% else %}danger{% endif %}" 
+                             role="progressbar" style="width: {{ progress }}%">
+                            {{ progress|floatformat:0 }}%
+                        </div>
+                    </div>
+                    <div class="mt-3">
+                        <p>
+                            <strong>Collected:</strong> KES {{ event.amount_collected|floatformat:0 }}<br>
+                            <strong>Target:</strong> KES {{ event.collection_target|floatformat:0 }}<br>
+                            <strong>Remaining:</strong> KES {{ remaining|floatformat:0 }}
+                        </p>
+                        <p>
+                            <strong>Contributors:</strong> {{ total_contributors }} members<br>
+                            <strong>Total Contributions:</strong> {{ total_public }}
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5>Contributions</h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>Contributor</th>
+                                <th>Amount</th>
+                                <th>Payment Method</th>
+                                <th>Date</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for contribution in contributions %}
+                            <tr>
+                                <td>{{ contribution.contributor_name }}</td>
+                                <td>KES {{ contribution.amount|floatformat:0 }}</td>
+                                <td>{{ contribution.get_payment_method_display }}</td>
+                                <td>{{ contribution.created_at|date:"M d, Y H:i" }}</td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="4" class="text-center">No contributions yet.</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </div>
     </div>
