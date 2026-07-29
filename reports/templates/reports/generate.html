@@ -1,0 +1,53 @@
+{% extends 'base_dashboard.html' %}
+
+{% block title %}Generate Report - LakChogo Connect{% endblock %}
+
+{% block dashboard_content %}
+<div class="row">
+    <div class="col-12">
+        <h1 class="h3">Generate Report</h1>
+        <p class="text-muted">Select report type and filters</p>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-md-8 mx-auto">
+        <div class="card">
+            <div class="card-body">
+                <form method="post">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label class="form-label">Report Type <span class="text-danger">*</span></label>
+                        <select class="form-select" name="report_type" required>
+                            <option value="">Select Report Type</option>
+                            <option value="member">Member Report</option>
+                            <option value="payment">Payment Report</option>
+                            <option value="attendance">Attendance Report</option>
+                            <option value="compliance">Compliance Report</option>
+                            <option value="welfare">Welfare Report</option>
+                            <option value="summary">Summary Report</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Format</label>
+                        <select class="form-select" name="format">
+                            <option value="pdf">PDF</option>
+                            <option value="csv">CSV</option>
+                            <option value="excel">Excel</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Filters (JSON)</label>
+                        <textarea class="form-control" name="filters" rows="3" placeholder='{"status": "active", "start_date": "2026-01-01"}'></textarea>
+                        <small class="text-muted">Optional filter parameters in JSON format</small>
+                    </div>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-file-alt"></i> Generate Report
+                    </button>
+                    <a href="{% url 'reports:index' %}" class="btn btn-secondary">Cancel</a>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
