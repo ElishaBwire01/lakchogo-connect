@@ -28,7 +28,6 @@ INSTALLED_APPS = [
     'corsheaders',
     'crispy_forms',
     'crispy_bootstrap5',
-    # 'django_filters',  # Temporarily commented out
     'django_extensions',
     
     # Local apps
@@ -157,7 +156,20 @@ LOGIN_URL = 'accounts:login'
 LOGIN_REDIRECT_URL = 'dashboard:index'
 LOGOUT_REDIRECT_URL = 'accounts:login'
 
-EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+# ============================================
+# EMAIL CONFIGURATION - GMAIL SMTP WITH APP PASSWORD
+# ============================================
+
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+EMAIL_HOST_USER = config('EMAIL_HOST_USER', default='elishabwire563@gmail.com')
+EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD', default='')
+DEFAULT_FROM_EMAIL = config('DEFAULT_FROM_EMAIL', default='elishabwire563@gmail.com')
+EMAIL_USE_SSL = False
+
+# ============================================
 
 LOGGING = {
     'version': 1,

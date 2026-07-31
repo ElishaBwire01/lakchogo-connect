@@ -13,9 +13,10 @@ urlpatterns = [
     path('profile/', views.profile, name='profile'),
     path('profile/edit/', views.profile_edit, name='profile_edit'),
     
-    # Password Reset
+    # Password Reset - Complete Flow (all URLs must be correct)
     path('password-reset/', views.password_reset, name='password_reset'),
-    path('password-reset/confirm/', views.password_reset_confirm, name='password_reset_confirm'),
+    path('password-reset/confirm-user/', views.password_reset_confirm_user, name='password_reset_confirm_user'),
+    path('password-reset/verify/', views.password_reset_verify, name='password_reset_verify'),
     
     # Admin - User Management
     path('manage/users/', views.manage_users, name='manage_users'),
