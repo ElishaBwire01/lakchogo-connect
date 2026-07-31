@@ -1,11 +1,8 @@
-"""
-Django settings for LakChogo Connect project.
-"""
-
 import os
 from pathlib import Path
 from decouple import config
 
+# Try to import dj_database_url, but handle if not installed
 try:
     import dj_database_url
 except ImportError:
@@ -31,7 +28,7 @@ INSTALLED_APPS = [
     'corsheaders',
     'crispy_forms',
     'crispy_bootstrap5',
-    'django_filters',
+    # 'django_filters',  # Temporarily commented out
     'django_extensions',
     
     # Local apps
@@ -137,9 +134,6 @@ REST_FRAMEWORK = {
     'DEFAULT_PERMISSION_CLASSES': [
         'rest_framework.permissions.IsAuthenticated',
     ],
-    'DEFAULT_FILTER_BACKENDS': [
-        'django_filters.rest_framework.DjangoFilterBackend',
-    ],
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
     'PAGE_SIZE': 20,
 }
@@ -189,18 +183,6 @@ LAKCHOGO_SETTINGS = {
 # SQLite WAL mode for better concurrency
 if 'sqlite3' in DATABASES['default']['ENGINE']:
     DATABASES['default']['OPTIONS'] = {
-        'timeout': 20,  # Increase timeout
-        'isolation_level': None,  # Enable WAL mode
+        'timeout': 20,
+        'isolation_level': None,
     }
-    # Enable WAL mode (Write-Ahead Logging) for better concurrency
-    import sqlite3
-    sqlite3.enable_callback_tracebacks(True)
-
-# Jitsi Meet Configuration
-JITSI_CONFIG = {
-    'DOMAIN': 'meet.jit.si',
-    'JWT_SECRET': 'lakchogo-jitsi-secret-key-2026',  # Change this in production
-    'APP_NAME': 'LakChogo Connect',
-    'ENABLE_PREJOIN_PAGE': False,
-    'ENABLE_WELCOME_PAGE': False,
-}

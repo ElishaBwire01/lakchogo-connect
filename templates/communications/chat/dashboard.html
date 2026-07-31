@@ -27,28 +27,25 @@
                         {% for room in chat_rooms %}
                             <a href="{% url 'communications:chat_room' room.id %}" class="list-group-item list-group-item-action">
                                 <div class="d-flex justify-content-between align-items-center">
-                                    <div>
+                                    <div class="flex-grow-1">
                                         <h6 class="mb-1">
-                                            {% if room.room_type == 'direct' %}
-                                                <i class="fas fa-user text-primary"></i>
-                                            {% elif room.room_type == 'committee' %}
-                                                <i class="fas fa-users-cog text-warning"></i>
-                                            {% else %}
-                                                <i class="fas fa-users text-success"></i>
-                                            {% endif %}
+                                            <i class="fas fa-comment text-success"></i>
                                             {{ room.name }}
+                                            <span class="badge bg-secondary ms-1">{{ room.members.count }} members</span>
                                         </h6>
                                         <small class="text-muted">
                                             {% if room.last_message %}
-                                                {{ room.last_message.sender.get_full_name }}: {{ room.last_message.content|truncatechars:50 }}
+                                                {{ room.last_message.sender.get_full_name }}: {{ room.last_message.content|truncatechars:60 }}
+                                                <span class="text-muted ms-2">{{ room.last_message.created_at|timesince }} ago</span>
                                             {% else %}
                                                 No messages yet
                                             {% endif %}
                                         </small>
                                     </div>
-                                    <div class="text-end">
-                                        <small class="text-muted">{{ room.last_message_time|timesince }} ago</small>
-                                        <span class="badge bg-secondary ms-2">{{ room.members.count }} members</span>
+                                    <div class="text-end ms-3">
+                                        {% if room.unread_count > 0 %}
+                                            <span class="badge bg-danger rounded-pill">{{ room.unread_count }}</span>
+                                        {% endif %}
                                     </div>
                                 </div>
                             </a>
@@ -81,14 +78,6 @@
                 {% csrf_token %}
                 <div class="modal-body">
                     <div class="mb-3">
-                        <label class="form-label">Chat Type</label>
-                        <select class="form-select" name="room_type">
-                            <option value="group">Group Chat</option>
-                            <option value="committee">Committee Chat</option>
-                            <option value="meeting">Meeting Chat</option>
-                        </select>
-                    </div>
-                    <div class="mb-3">
                         <label class="form-label">Room Name</label>
                         <input type="text" class="form-control" name="name" placeholder="Enter room name">
                     </div>
@@ -101,6 +90,10 @@
                         </select>
                         <small class="text-muted">Hold Ctrl/Cmd to select multiple</small>
                     </div>
+                    <div class="mb-3">
+                        <button type="button" class="btn btn-sm btn-outline-primary" onclick="selectAll()">Select All</button>
+                        <button type="button" class="btn btn-sm btn-outline-secondary" onclick="deselectAll()">Clear All</button>
+                    </div>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
@@ -112,7 +105,18 @@
 </div>
 
 <script>
-// Manual refresh only, no auto-refresh to reduce database load
-// User can manually refresh the page if needed
+function selectAll() {
+    var select = document.querySelector('select[name="member_ids"]');
+    for (var i = 0; i < select.options.length; i++) {
+        select.options[i].selected = true;
+    }
+}
+
+function deselectAll() {
+    var select = document.querySelector('select[name="member_ids"]');
+    for (var i = 0; i < select.options.length; i++) {
+        select.options[i].selected = false;
+    }
+}
 </script>
 {% endblock %}

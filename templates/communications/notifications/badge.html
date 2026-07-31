@@ -5,7 +5,7 @@
 {% endif %}
 
 <script>
-// Only update every 60 seconds to reduce database load
+// Update notification badge silently (no popups)
 function updateNotificationBadge() {
     fetch('{% url "communications:unread_count_json" %}')
         .then(response => response.json())
@@ -25,7 +25,7 @@ function updateNotificationBadge() {
         });
 }
 
-// Update every 60 seconds instead of 30
+// Update every 60 seconds
 setInterval(updateNotificationBadge, 60000);
 // Update on page load after 2 seconds
 document.addEventListener('DOMContentLoaded', function() {

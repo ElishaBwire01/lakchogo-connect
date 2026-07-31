@@ -1,0 +1,27 @@
+{% extends 'base_dashboard.html' %}
+
+{% block title %}Clear Chat - {{ room.name }}{% endblock %}
+
+{% block dashboard_content %}
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-body text-center">
+                <i class="fas fa-exclamation-triangle fa-4x text-warning mb-3"></i>
+                <h4>Clear All Messages?</h4>
+                <p>Are you sure you want to delete all messages in <strong>{{ room.name }}</strong>?</p>
+                <p class="text-muted">This action cannot be undone.</p>
+                <form method="post">
+                    {% csrf_token %}
+                    <div class="d-grid gap-2 d-md-flex justify-content-center">
+                        <a href="{% url 'communications:chat_room' room.id %}" class="btn btn-secondary">Cancel</a>
+                        <button type="submit" class="btn btn-danger">
+                            <i class="fas fa-trash"></i> Yes, Clear All
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -14,14 +14,15 @@
                 <a href="{% url 'communications:meeting_list' %}" class="btn btn-secondary">
                     <i class="fas fa-arrow-left"></i> Back
                 </a>
-                <a href="{% url 'communications:join_meeting' meeting.id %}" class="btn btn-success" target="_blank">
-                    <i class="fas fa-video"></i> 
-                    {% if meeting.created_by == user %}
-                        Start Meeting (Host)
-                    {% else %}
-                        Join Meeting
-                    {% endif %}
-                </a>
+                {% if meeting.created_by == user %}
+                    <a href="{% url 'communications:join_meeting' meeting.id %}" class="btn btn-success" target="_blank">
+                        <i class="fas fa-video"></i> Start Meeting (Host)
+                    </a>
+                {% else %}
+                    <a href="{% url 'communications:join_meeting' meeting.id %}" class="btn btn-primary" target="_blank">
+                        <i class="fas fa-video"></i> Join Meeting
+                    </a>
+                {% endif %}
             </div>
         </div>
     </div>
@@ -85,12 +86,12 @@
             <div class="card-header bg-primary text-white">
                 <h5><i class="fas fa-video"></i> Join Meeting</h5>
             </div>
-            <div class="card-body text-center">
-                <div class="mb-3">
+            <div class="card-body">
+                <div class="text-center mb-3">
                     {% if meeting.created_by == user %}
                         <i class="fas fa-crown fa-4x text-warning"></i>
                         <h4 class="text-warning">You are the Host</h4>
-                        <p class="text-muted">You have moderator privileges</p>
+                        <p class="text-muted">You will have moderator privileges</p>
                     {% else %}
                         <i class="fas fa-user fa-4x text-primary"></i>
                         <h4 class="text-primary">You are a Participant</h4>
@@ -100,21 +101,54 @@
                 
                 <div class="alert alert-info">
                     <strong>Room ID:</strong> <code>{{ meeting.room_code }}</code>
+                    <br>
+                    <small>Share this ID with participants to join</small>
                 </div>
-                
-                <a href="{% url 'communications:join_meeting' meeting.id %}" class="btn btn-{% if meeting.created_by == user %}warning{% else %}success{% endif %} btn-lg" target="_blank">
-                    <i class="fas fa-video"></i> 
+
+                <!-- Jitsi Google Login Instructions -->
+                <div class="card bg-light mb-3">
+                    <div class="card-header">
+                        <i class="fab fa-google text-danger"></i> 
+                        <strong>Login with Google on Jitsi</strong>
+                    </div>
+                    <div class="card-body">
+                        <p class="small text-muted">
+                            When you click the button below, you will be taken to Jitsi.
+                            <strong>For full moderator control, login with Google on the Jitsi page.</strong>
+                        </p>
+                        <ol class="small">
+                            <li>Click the <strong>"Start Meeting"</strong> button below</li>
+                            <li>On the Jitsi page, click the <strong>Login</strong> button</li>
+                            <li>Select <strong>Google</strong> and login with your Google account</li>
+                            <li>You will have full moderator privileges</li>
+                        </ol>
+                        <div class="alert alert-warning small">
+                            <i class="fas fa-info-circle"></i> 
+                            <strong>Host Tip:</strong> Login with Google on Jitsi to get moderator controls (Mute, Remove, Record, etc.)
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="d-grid gap-2">
                     {% if meeting.created_by == user %}
-                        Start Meeting
+                        <a href="{% url 'communications:join_meeting' meeting.id %}" class="btn btn-success btn-lg" target="_blank">
+                            <i class="fas fa-video"></i> Start Meeting (Host)
+                        </a>
+                        <small class="text-muted text-center">
+                            <i class="fas fa-google"></i> Login with Google on Jitsi for moderator control
+                        </small>
                     {% else %}
-                        Join Meeting
+                        <a href="{% url 'communications:join_meeting' meeting.id %}" class="btn btn-primary btn-lg" target="_blank">
+                            <i class="fas fa-video"></i> Join Meeting
+                        </a>
                     {% endif %}
-                </a>
+                </div>
                 
                 <div class="mt-3">
                     <small class="text-muted">
                         <i class="fas fa-info-circle"></i> 
-                        The meeting will open in Jitsi Meet. No account needed.
+                        The meeting will open in Jitsi Meet. No account needed to join.
                     </small>
                 </div>
                 

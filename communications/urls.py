@@ -28,6 +28,12 @@ urlpatterns = [
     path('chat/message/<int:message_id>/delete/', views.delete_chat_message, name='delete_message'),
     path('chat/unread-count/', views.get_unread_chat_count, name='unread_chat_count'),
     path('chat/<int:room_id>/details/', views.chat_room_details, name='chat_room_details'),
+    path('chat/<int:room_id>/clear/', views.clear_chat, name='clear_chat'),
+    path('chat/room/list/', views.room_list, name='room_list'),
+    path('chat/message/<int:message_id>/edit/', views.edit_message, name='edit_message'),
+    path('chat/message/<int:message_id>/forward/', views.forward_message, name='forward_message'),
+    path('chat/message/<int:message_id>/share/', views.share_message, name='share_message'),
+    path('chat/message/<int:message_id>/reply/', views.reply_to_message, name='reply_message'),
     
     # Meeting Rooms
     path('meetings/', views.meeting_list, name='meeting_list'),

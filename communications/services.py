@@ -427,3 +427,20 @@ class NotificationTriggers:
             related_id=message.room.id,
             related_model='ChatRoom'
         )
+
+    @staticmethod
+    def chat_message_notification(message, recipient):
+        """Send a chat message notification that auto-dismisses"""
+        # Create notification in database
+        NotificationService.send_notification(
+            user=recipient,
+            notification_type='chat_message',
+            title=f'💬 New message from {message.sender.get_full_name()}',
+            message=message.content[:100],
+            action_url=f'/communications/chat/{message.room.id}/',
+            related_id=message.room.id,
+            related_model='ChatRoom'
+        )
+        
+        # The frontend will show a toast notification that auto-dismisses after 1 second
+        # This is handled in the chat room template
