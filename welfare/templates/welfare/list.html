@@ -1,0 +1,64 @@
+{% extends 'base_dashboard.html' %}
+
+{% block title %}All Welfare Events - LakChogo Connect{% endblock %}
+
+{% block dashboard_content %}
+<div class="row">
+    <div class="col-12">
+        <h1 class="h3">All Welfare Events</h1>
+        <p class="text-muted">View all welfare and bereavement events</p>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>Event Code</th>
+                                <th>Deceased</th>
+                                <th>Member</th>
+                                <th>Target</th>
+                                <th>Collected</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for event in events %}
+                            <tr>
+                                <td>{{ event.event_code }}</td>
+                                <td>{{ event.deceased_name }}</td>
+                                <td>{{ event.member.get_full_name }}</td>
+                                <td>KES {{ event.collection_target|floatformat:0 }}</td>
+                                <td>KES {{ event.amount_collected|floatformat:0 }}</td>
+                                <td>
+                                    <span class="badge bg-{% if event.status == 'active' %}success{% elif event.status == 'closed' %}warning{% elif event.status == 'disbursed' %}info{% else %}danger{% endif %}">
+                                        {{ event.status|upper }}
+                                    </span>
+                                </td>
+                                <td>
+                                    <a href="{% url 'welfare:detail' event.id %}" class="btn btn-sm btn-info">
+                                        <i class="fas fa-eye"></i>
+                                    </a>
+                                    <a href="{% url 'welfare:add_contribution' event.id %}" class="btn btn-sm btn-success">
+                                        <i class="fas fa-plus"></i>
+                                    </a>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="7" class="text-center">No welfare events found.</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -7,6 +7,7 @@ from django.http import JsonResponse, HttpResponse
 from django.db.models import Q
 from .models import Meeting, Attendance, MeetingMinutes
 from members.models import Member
+from accounts.decorators import permission_required, admin_required
 from datetime import datetime
 import json
 import hashlib
@@ -42,8 +43,9 @@ def index(request):
 
 
 @login_required
+@permission_required('can_create_meeting')
 def schedule(request):
-    """Schedule a new meeting"""
+    """Schedule a new meeting - Secretary or Admin"""
     if request.method == 'POST':
         title = request.POST.get('title')
         description = request.POST.get('description')
@@ -55,10 +57,8 @@ def schedule(request):
             messages.error(request, 'Title, Date, and Venue are required.')
             return render(request, 'meetings/schedule.html', {'title': 'Schedule Meeting'})
         
-        # Convert string to datetime
         try:
             meeting_date = datetime.strptime(date_str, '%Y-%m-%dT%H:%M')
-            # Make it timezone aware
             meeting_date = timezone.make_aware(meeting_date)
         except ValueError:
             messages.error(request, 'Invalid date format.')
@@ -90,6 +90,9 @@ def detail(request, meeting_id):
     meeting = get_object_or_404(Meeting, id=meeting_id)
     attendees = Attendance.objects.filter(meeting=meeting)
     
+    # Check if current user can take attendance (only the one who scheduled or admin)
+    can_take_attendance = (meeting.created_by == request.user) or request.user.is_admin
+    
     context = {
         'meeting': meeting,
         'attendees': attendees,
@@ -98,14 +101,20 @@ def detail(request, meeting_id):
         'absent_count': attendees.filter(status='absent').count(),
         'excused_count': attendees.filter(status='excused').count(),
         'total_members': Member.objects.filter(status='active').count(),
+        'can_take_attendance': can_take_attendance,
     }
     return render(request, 'meetings/detail.html', context)
 
 
 @login_required
 def take_attendance(request, meeting_id):
-    """Take attendance for a meeting"""
+    """Take attendance for a meeting - Only the scheduler or admin can do this"""
     meeting = get_object_or_404(Meeting, id=meeting_id)
+    
+    # Check permission: only the person who scheduled the meeting or admin can take attendance
+    if meeting.created_by != request.user and not request.user.is_admin:
+        messages.error(request, 'Only the meeting scheduler or admin can take attendance.')
+        return redirect('meetings:detail', meeting_id=meeting.id)
     
     if meeting.status == 'cancelled':
         messages.error(request, 'This meeting has been cancelled.')
@@ -147,8 +156,9 @@ def take_attendance(request, meeting_id):
 
 
 @login_required
+@permission_required('can_manage_minutes')
 def upload_minutes(request, meeting_id):
-    """Upload minutes for a meeting"""
+    """Upload minutes for a meeting - Secretary or Admin"""
     meeting = get_object_or_404(Meeting, id=meeting_id)
     
     if request.method == 'POST':
@@ -186,8 +196,9 @@ def upload_minutes(request, meeting_id):
 
 
 @login_required
+@permission_required('can_edit_meeting')
 def edit_meeting(request, meeting_id):
-    """Edit meeting details"""
+    """Edit meeting details - Secretary or Admin"""
     meeting = get_object_or_404(Meeting, id=meeting_id)
     
     if request.method == 'POST':
@@ -216,8 +227,9 @@ def edit_meeting(request, meeting_id):
 
 
 @login_required
+@permission_required('can_delete_meeting')
 def delete_meeting(request, meeting_id):
-    """Delete a meeting"""
+    """Delete a meeting - Admin only"""
     meeting = get_object_or_404(Meeting, id=meeting_id)
     
     if request.method == 'POST':
@@ -234,7 +246,7 @@ def delete_meeting(request, meeting_id):
 
 @login_required
 def generate_qr(request, meeting_id):
-    """Generate QR code data for a meeting (JSON response for API)"""
+    """Generate QR code data for a meeting"""
     meeting = get_object_or_404(Meeting, id=meeting_id)
     
     data = {
@@ -258,7 +270,7 @@ def generate_qr(request, meeting_id):
 
 @login_required
 def qr_code_display(request, meeting_id):
-    """Display QR code for a meeting - HTML page"""
+    """Display QR code for a meeting"""
     meeting = get_object_or_404(Meeting, id=meeting_id)
     
     context = {
@@ -272,7 +284,7 @@ def qr_code_display(request, meeting_id):
 
 @login_required
 def generate_qr_image(request, meeting_id):
-    """Generate QR code image for a meeting (PNG)"""
+    """Generate QR code image for a meeting"""
     import qrcode
     import json
     from io import BytesIO
@@ -358,26 +370,3 @@ def get_attendance_summary(request, meeting_id):
         'late': attendance.filter(status='late').count(),
     }
     return JsonResponse(data)
-
-@login_required
-def generate_qr_json(request, meeting_id):
-    """Generate QR code data as JSON"""
-    meeting = get_object_or_404(Meeting, id=meeting_id)
-    
-    data = {
-        'meeting_id': meeting.id,
-        'title': meeting.title,
-        'date': meeting.date.isoformat(),
-        'venue': meeting.venue,
-    }
-    qr_data = json.dumps(data)
-    qr_hash = hashlib.md5(qr_data.encode()).hexdigest()
-    
-    meeting.qr_code = qr_hash
-    meeting.save()
-    
-    return JsonResponse({
-        'qr_code': qr_hash,
-        'meeting_id': meeting.id,
-        'data': qr_data,
-    })

@@ -364,3 +364,94 @@ def delete_report(request, report_id):
         'title': 'Delete Report',
     }
     return render(request, 'reports/delete.html', context)
+
+@login_required
+def generate_report(request):
+    """Generate a report - All authenticated users can generate"""
+    from finance.models import PaymentCategory
+    from .services import ReportService
+    from .exporters import ReportExporter
+    import json
+    
+    if request.method == 'POST':
+        report_type = request.POST.get('report_type')
+        format_type = request.POST.get('format', 'csv')
+        filters = request.POST.get('filters', '{}')
+        
+        try:
+            filters_data = json.loads(filters) if filters else {}
+        except:
+            filters_data = {}
+        
+        # Create report
+        report = Report.objects.create(
+            report_type=report_type,
+            title=f"{report_type.title()} Report - {timezone.now().strftime('%Y-%m-%d %H:%M')}",
+            generated_by=request.user,
+            filters=filters_data,
+            status='pending'
+        )
+        
+        try:
+            report.mark_generating()
+            service = ReportService()
+            data = service.generate_report(report.id)
+            report.mark_completed()
+            report.data = data
+            report.save()
+            
+            # Generate file based on format
+            exporter = ReportExporter(data, report.title, format_type)
+            response = exporter.export()
+            
+            # Save file to report
+            from django.core.files.base import ContentFile
+            content = response.content
+            ext = format_type if format_type != 'excel' else 'xlsx'
+            report.file.save(f"{report.title}.{ext}", ContentFile(content))
+            report.save()
+            
+            messages.success(request, f'Report generated successfully in {format_type.upper()} format!')
+            
+            return response
+            
+        except Exception as e:
+            report.mark_failed(str(e))
+            messages.error(request, f'Error generating report: {str(e)}')
+            return redirect('reports:detail', report_id=report.id)
+    
+    categories = PaymentCategory.objects.filter(is_active=True)
+    
+    context = {
+        'title': 'Generate Report',
+        'categories': categories,
+    }
+    return render(request, 'reports/generate.html', context)
+
+
+@login_required
+def download_report(request, report_id):
+    """Download a generated report - User can download their own reports"""
+    report = get_object_or_404(Report, id=report_id)
+    
+    # Check if user owns this report
+    if report.generated_by != request.user and not request.user.is_admin:
+        messages.error(request, 'You do not have permission to download this report.')
+        return redirect('reports:index')
+    
+    if report.status != 'completed':
+        messages.error(request, 'Report is not ready for download yet.')
+        return redirect('reports:detail', report_id=report.id)
+    
+    if report.file:
+        response = HttpResponse(report.file.read(), content_type='application/octet-stream')
+        response['Content-Disposition'] = f'attachment; filename="{report.file.name}"'
+        return response
+    
+    try:
+        exporter = ReportExporter(report.data, report.title, 'csv')
+        response = exporter.to_csv()
+        return response
+    except Exception as e:
+        messages.error(request, f'Error downloading report: {str(e)}')
+        return redirect('reports:detail', report_id=report.id)

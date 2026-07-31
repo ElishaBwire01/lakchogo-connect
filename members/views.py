@@ -7,11 +7,13 @@ from django.core.paginator import Paginator
 from django.http import JsonResponse
 from django.utils import timezone
 from .models import Member, MemberNote, MemberDocument, MemberContributionSummary
+from accounts.decorators import admin_required, committee_required, permission_required
 
 User = get_user_model()
 
 @login_required
 def list_members(request):
+    """List all members - All authenticated users can view"""
     members = Member.objects.all().order_by('-date_joined')
     
     status_filter = request.GET.get('status')
@@ -43,7 +45,9 @@ def list_members(request):
 
 
 @login_required
+@permission_required('can_add_member')
 def register_member(request):
+    """Register a new member - Requires add member permission"""
     if request.method == 'POST':
         username = request.POST.get('username')
         first_name = request.POST.get('first_name')
@@ -94,8 +98,9 @@ def register_member(request):
 
 @login_required
 def member_detail(request, member_id):
+    """View member details - All authenticated users can view"""
     member = get_object_or_404(Member, member_id=member_id)
-    notes = member.member_notes_list.all().order_by('-created_at')[:10]  # Updated related_name
+    notes = member.member_notes_list.all().order_by('-created_at')[:10]
     
     try:
         summary = member.contribution_summary
@@ -113,7 +118,9 @@ def member_detail(request, member_id):
 
 
 @login_required
+@permission_required('can_edit_member')
 def edit_member(request, member_id):
+    """Edit member details - Requires edit permission"""
     member = get_object_or_404(Member, member_id=member_id)
     
     if request.method == 'POST':
@@ -154,6 +161,7 @@ def edit_member(request, member_id):
 
 @login_required
 def search_members(request):
+    """Search members - All authenticated users can search"""
     query = request.GET.get('q', '')
     members = Member.objects.filter(status='active')
     
@@ -174,7 +182,9 @@ def search_members(request):
 
 
 @login_required
+@permission_required('can_add_member')
 def add_note(request, member_id):
+    """Add a note to a member - Requires add permission"""
     member = get_object_or_404(Member, member_id=member_id)
     
     if request.method == 'POST':
@@ -203,6 +213,7 @@ def add_note(request, member_id):
 
 @login_required
 def member_status(request, member_id):
+    """View member status - All authenticated users can view"""
     member = get_object_or_404(Member, member_id=member_id)
     try:
         summary = member.contribution_summary
@@ -217,41 +228,10 @@ def member_status(request, member_id):
     }
     return render(request, 'members/status.html', context)
 
-
 @login_required
-def get_member_json(request, member_id):
-    member = get_object_or_404(Member, member_id=member_id)
-    
-    data = {
-        'member_id': member.member_id,
-        'name': member.get_full_name(),
-        'phone': member.user.phone,
-        'email': member.user.email,
-        'status': member.status,
-        'compliance_status': member.compliance_status,
-        'date_joined': member.date_joined.isoformat(),
-    }
-    return JsonResponse(data)
-
-
-@login_required
-def get_members_json(request):
-    members = Member.objects.filter(status='active')
-    data = []
-    
-    for member in members:
-        data.append({
-            'member_id': member.member_id,
-            'name': member.get_full_name(),
-            'phone': member.user.phone,
-            'status': member.status,
-        })
-    
-    return JsonResponse({'members': data})
-
-
-@login_required
+@permission_required('can_edit_member')
 def update_status(request, member_id):
+    """Update member status - Requires edit permission"""
     member = get_object_or_404(Member, member_id=member_id)
     
     if request.method == 'POST':
@@ -270,3 +250,36 @@ def update_status(request, member_id):
         'title': 'Update Status',
     }
     return render(request, 'members/update_status.html', context)
+
+@login_required
+def get_member_json(request, member_id):
+    """Get member data as JSON for API"""
+    member = get_object_or_404(Member, member_id=member_id)
+    
+    data = {
+        'member_id': member.member_id,
+        'name': member.get_full_name(),
+        'phone': member.user.phone,
+        'email': member.user.email,
+        'status': member.status,
+        'compliance_status': member.compliance_status,
+        'date_joined': member.date_joined.isoformat(),
+    }
+    return JsonResponse(data)
+
+
+@login_required
+def get_members_json(request):
+    """Get all members as JSON for API"""
+    members = Member.objects.filter(status='active')
+    data = []
+    
+    for member in members:
+        data.append({
+            'member_id': member.member_id,
+            'name': member.get_full_name(),
+            'phone': member.user.phone,
+            'status': member.status,
+        })
+    
+    return JsonResponse({'members': data})

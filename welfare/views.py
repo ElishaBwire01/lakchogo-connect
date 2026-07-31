@@ -7,6 +7,7 @@ from django.db.models import Sum, Q
 from django.utils import timezone
 from .models import BereavementEvent, BereavementContribution, WelfareFund, WelfareRequest
 from members.models import Member
+from accounts.decorators import permission_required
 
 @login_required
 def index(request):
@@ -42,8 +43,9 @@ def index(request):
 
 
 @login_required
+@permission_required('can_create_welfare')
 def create_event(request):
-    """Create a new bereavement event"""
+    """Create a new bereavement event - Admin/Welfare Officer only"""
     if request.method == 'POST':
         member_id = request.POST.get('member_id')
         deceased_name = request.POST.get('deceased_name')
@@ -103,38 +105,40 @@ def detail(request, event_id):
 
 @login_required
 def add_contribution(request, event_id):
-    """Add a contribution to an event"""
+    """Add a contribution to an event - Auto-populates current user"""
     event = get_object_or_404(BereavementEvent, id=event_id)
     
+    # Get the current user's member record
+    try:
+        contributor = Member.objects.get(user=request.user)
+    except Member.DoesNotExist:
+        messages.error(request, 'You are not registered as a member.')
+        return redirect('welfare:detail', event_id=event.id)
+    
     if request.method == 'POST':
-        contributor_id = request.POST.get('contributor_id')
         amount = request.POST.get('amount')
         payment_method = request.POST.get('payment_method')
-        contributor_name = request.POST.get('contributor_name')
-        contributor_phone = request.POST.get('contributor_phone')
-        is_public = request.POST.get('is_public') == 'on'
         notes = request.POST.get('notes')
+        is_public = request.POST.get('is_public') == 'on'
         
         if not amount:
             messages.error(request, 'Amount is required.')
             return redirect('welfare:detail', event_id=event.id)
         
-        contributor = None
-        if contributor_id:
-            contributor = get_object_or_404(Member, id=contributor_id)
-        
+        # Auto-populate contributor name from current user
         contribution = BereavementContribution.objects.create(
             event=event,
             contributor=contributor,
             amount=amount,
             payment_method=payment_method or 'cash',
             is_public_contribution=is_public,
-            contributor_name=contributor_name or (contributor.get_full_name() if contributor else ''),
-            contributor_phone=contributor_phone or (contributor.user.phone if contributor else ''),
+            contributor_name=contributor.get_full_name(),  # Auto-populated
+            contributor_phone=contributor.user.phone,      # Auto-populated
             notes=notes,
             recorded_by=request.user
         )
         
+        # Update event amount collected
         event.amount_collected += float(amount)
         event.save()
         
@@ -143,15 +147,16 @@ def add_contribution(request, event_id):
     
     context = {
         'event': event,
-        'members': Member.objects.filter(status='active'),
+        'contributor': contributor,  # Auto-populated
         'title': 'Add Contribution',
     }
     return render(request, 'welfare/add_contribution.html', context)
 
 
 @login_required
+@permission_required('can_approve_welfare')
 def approve_event(request, event_id):
-    """Approve/close a bereavement event"""
+    """Approve/close a bereavement event - Admin/Welfare Officer only"""
     event = get_object_or_404(BereavementEvent, id=event_id)
     
     if request.method == 'POST':
@@ -236,15 +241,22 @@ def welfare_requests(request):
 
 @login_required
 def create_request(request):
-    """Create a welfare request"""
+    """Create a welfare request - User can only create for themselves"""
     if request.method == 'POST':
         request_type = request.POST.get('request_type')
         title = request.POST.get('title')
         description = request.POST.get('description')
         amount_requested = request.POST.get('amount_requested')
         
+        # Get the current user's member record
+        try:
+            member = Member.objects.get(user=request.user)
+        except Member.DoesNotExist:
+            messages.error(request, 'You are not registered as a member.')
+            return redirect('dashboard:index')
+        
         welfare_request = WelfareRequest.objects.create(
-            member=request.user.member,
+            member=member,
             request_type=request_type,
             title=title,
             description=description,
@@ -265,6 +277,17 @@ def request_detail(request, request_id):
     """View welfare request details"""
     welfare_request = get_object_or_404(WelfareRequest, id=request_id)
     
+    # Check if user can view this request
+    if not request.user.is_admin and not request.user.is_superuser:
+        try:
+            member = Member.objects.get(user=request.user)
+            if welfare_request.member != member:
+                messages.error(request, 'You do not have permission to view this request.')
+                return redirect('welfare:requests')
+        except Member.DoesNotExist:
+            messages.error(request, 'You are not registered as a member.')
+            return redirect('dashboard:index')
+    
     context = {
         'request': welfare_request,
         'title': f'Request: {welfare_request.title}',
@@ -273,8 +296,9 @@ def request_detail(request, request_id):
 
 
 @login_required
+@permission_required('can_approve_welfare')
 def approve_request(request, request_id):
-    """Approve a welfare request"""
+    """Approve a welfare request - Admin/Welfare Officer only"""
     welfare_request = get_object_or_404(WelfareRequest, id=request_id)
     
     if request.method == 'POST':

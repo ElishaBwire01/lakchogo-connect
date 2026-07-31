@@ -157,3 +157,12 @@
     </div>
 </div>
 {% endblock %}
+                {% if can_take_attendance %}
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle"></i> You have permission to take attendance for this meeting.
+                    </div>
+                {% else %}
+                    <div class="alert alert-warning">
+                        <i class="fas fa-lock"></i> Only the meeting scheduler or admin can take attendance.
+                    </div>
+                {% endif %}

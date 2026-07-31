@@ -25,6 +25,7 @@ class User(AbstractUser):
     date_joined = models.DateTimeField(default=timezone.now)
     is_active = models.BooleanField(default=True)
     is_committee = models.BooleanField(default=False)
+    is_staff = models.BooleanField(default=False)
     last_login = models.DateTimeField(null=True, blank=True)
     profile_picture = models.ImageField(
         upload_to='profile_pics/', 
@@ -45,7 +46,73 @@ class User(AbstractUser):
         if self.first_name and self.last_name:
             return f"{self.first_name} {self.last_name}"
         return self.username
-
+    
+    def has_permission(self, permission_codename):
+        """Check if user has a specific permission"""
+        from .permissions import user_has_permission
+        return user_has_permission(self, permission_codename)
+    
+    def has_any_permission(self, permission_codenames):
+        """Check if user has any of the listed permissions"""
+        from .permissions import user_has_any_permission
+        return user_has_any_permission(self, permission_codenames)
+    
+    def has_all_permissions(self, permission_codenames):
+        """Check if user has all listed permissions"""
+        from .permissions import user_has_all_permissions
+        return user_has_all_permissions(self, permission_codenames)
+    
+    @property
+    def is_admin(self):
+        """Check if user is admin"""
+        if self.is_superuser:
+            return True
+        return UserRole.objects.filter(
+            user=self,
+            role__name='Admin',
+            is_active=True
+        ).exists()
+    
+    @property
+    def is_treasurer(self):
+        if self.is_superuser:
+            return True
+        return UserRole.objects.filter(
+            user=self,
+            role__name='Treasurer',
+            is_active=True
+        ).exists()
+    
+    @property
+    def is_secretary(self):
+        if self.is_superuser:
+            return True
+        return UserRole.objects.filter(
+            user=self,
+            role__name='Secretary',
+            is_active=True
+        ).exists()
+    
+    @property
+    def is_welfare_officer(self):
+        if self.is_superuser:
+            return True
+        return UserRole.objects.filter(
+            user=self,
+            role__name='Welfare Officer',
+            is_active=True
+        ).exists()
+    
+    @property
+    def is_committee_member(self):
+        if self.is_superuser:
+            return True
+        return UserRole.objects.filter(
+            user=self,
+            role__name__in=['Admin', 'Treasurer', 'Secretary', 'Welfare Officer'],
+            is_active=True
+        ).exists()
+    
     @property
     def is_member(self):
         return hasattr(self, 'member') and self.member.is_active

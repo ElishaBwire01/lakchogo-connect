@@ -1,0 +1,62 @@
+{% extends 'base_dashboard.html' %}
+
+{% block title %}Welfare Funds - LakChogo Connect{% endblock %}
+
+{% block dashboard_content %}
+<div class="row">
+    <div class="col-12">
+        <h1 class="h3">Welfare Funds</h1>
+        <p class="text-muted">Manage welfare funds</p>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-md-4">
+        <div class="card bg-success text-white">
+            <div class="card-body">
+                <h5>Total Balance</h5>
+                <h2>KES {{ total_balance|floatformat:0 }}</h2>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>Fund Name</th>
+                                <th>Type</th>
+                                <th>Balance</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for fund in funds %}
+                            <tr>
+                                <td>{{ fund.name }}</td>
+                                <td>{{ fund.get_fund_type_display }}</td>
+                                <td>KES {{ fund.balance|floatformat:0 }}</td>
+                                <td>
+                                    <span class="badge bg-{% if fund.is_active %}success{% else %}danger{% endif %}">
+                                        {% if fund.is_active %}Active{% else %}Inactive{% endif %}
+                                    </span>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="4" class="text-center">No funds available.</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

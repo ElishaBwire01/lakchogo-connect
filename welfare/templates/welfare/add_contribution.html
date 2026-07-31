@@ -1,0 +1,53 @@
+{% extends 'base_dashboard.html' %}
+
+{% block title %}Add Contribution - {{ event.deceased_name }}{% endblock %}
+
+{% block dashboard_content %}
+<div class="row">
+    <div class="col-12">
+        <h1 class="h3">Add Contribution to {{ event.deceased_name }}</h1>
+        <p class="text-muted">Add a contribution to the welfare event</p>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-md-8 mx-auto">
+        <div class="card">
+            <div class="card-header">
+                <h5>Contribution Details</h5>
+                <small>Event: {{ event.event_code }} - {{ event.deceased_name }}</small>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-info">
+                    <i class="fas fa-user"></i> Contributing as: <strong>{{ contributor.get_full_name }}</strong>
+                    <br><small>Member ID: {{ contributor.member_id }}</small>
+                </div>
+                <form method="post">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label class="form-label">Amount (KES) <span class="text-danger">*</span></label>
+                        <input type="number" class="form-control" name="amount" step="0.01" placeholder="Enter amount" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Payment Method</label>
+                        <select class="form-select" name="payment_method">
+                            <option value="cash">Cash</option>
+                            <option value="mpesa">M-Pesa</option>
+                            <option value="airtel">Airtel Money</option>
+                            <option value="bank">Bank Transfer</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Notes</label>
+                        <textarea class="form-control" name="notes" rows="2"></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-plus"></i> Add Contribution
+                    </button>
+                    <a href="{% url 'welfare:detail' event.id %}" class="btn btn-secondary">Cancel</a>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
