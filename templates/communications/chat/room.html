@@ -32,15 +32,7 @@
         box-shadow: 0 1px 3px rgba(0,0,0,0.1);
     }
     .message-system {
-        background: #e9ecef;
-        color: #6c757d;
-        text-align: center;
-        margin: 10px auto;
-        font-style: italic;
-        font-size: 0.9em;
-        border-radius: 20px;
-        padding: 5px 15px;
-        max-width: 80%;
+        display: none;
     }
     .message-time {
         font-size: 0.7em;
@@ -50,6 +42,11 @@
     .chat-input-area {
         border-top: 1px solid #dee2e6;
         padding-top: 15px;
+    }
+    .no-messages {
+        text-align: center;
+        padding: 50px 0;
+        color: #6c757d;
     }
 </style>
 {% endblock %}
@@ -82,6 +79,12 @@
                 <a href="{% url 'communications:chat_dashboard' %}" class="btn btn-secondary">
                     <i class="fas fa-arrow-left"></i> Back
                 </a>
+                <a href="{% url 'communications:create_meeting_from_chat' room.id %}" class="btn btn-success">
+                    <i class="fas fa-video"></i> Video Call
+                </a>
+                <button onclick="refreshChat()" class="btn btn-info">
+                    <i class="fas fa-sync"></i> Refresh
+                </button>
             </div>
         </div>
     </div>
@@ -93,36 +96,36 @@
             <div class="card-body">
                 <!-- Messages -->
                 <div class="chat-container" id="chat-messages">
-                    {% for message in messages %}
-                        <div class="d-flex" data-msg-id="{{ message.id }}">
-                            <div class="message-bubble 
-                                {% if message.message_type == 'system' %}
-                                    message-system
-                                {% elif message.sender == user %}
-                                    message-sent
-                                {% else %}
-                                    message-received
-                                {% endif %}
-                            ">
-                                {% if message.sender != user and message.message_type != 'system' %}
-                                    <strong>{{ message.sender.get_full_name }}</strong><br>
-                                {% endif %}
-                                {{ message.content|linebreaks }}
-                                <div class="message-time">
-                                    {{ message.created_at|date:"M d, Y H:i" }}
+                    {% if messages %}
+                        {% for message in messages %}
+                            <div class="d-flex" data-msg-id="{{ message.id }}">
+                                <div class="message-bubble 
                                     {% if message.sender == user %}
-                                        <i class="fas fa-check" style="font-size: 0.7em;"></i>
+                                        message-sent
+                                    {% else %}
+                                        message-received
                                     {% endif %}
+                                ">
+                                    {% if message.sender != user %}
+                                        <strong>{{ message.sender.get_full_name }}</strong><br>
+                                    {% endif %}
+                                    {{ message.content|linebreaks }}
+                                    <div class="message-time">
+                                        {{ message.created_at|date:"M d, Y H:i" }}
+                                        {% if message.sender == user %}
+                                            <i class="fas fa-check" style="font-size: 0.7em;"></i>
+                                        {% endif %}
+                                    </div>
                                 </div>
                             </div>
-                        </div>
-                    {% empty %}
-                        <div class="text-center text-muted py-5">
-                            <i class="fas fa-comment fa-4x mb-3"></i>
+                        {% endfor %}
+                    {% else %}
+                        <div class="no-messages">
+                            <i class="fas fa-comment fa-3x mb-3"></i>
                             <h5>No messages yet</h5>
                             <p>Start the conversation!</p>
                         </div>
-                    {% endfor %}
+                    {% endif %}
                 </div>
 
                 <!-- Message Input -->
@@ -149,7 +152,7 @@ if (chatContainer) {
     chatContainer.scrollTop = chatContainer.scrollHeight;
 }
 
-// Send message via AJAX - prevents page reload
+// Send message via AJAX
 document.getElementById('chat-form').addEventListener('submit', function(e) {
     e.preventDefault();
     const form = this;
@@ -159,10 +162,8 @@ document.getElementById('chat-form').addEventListener('submit', function(e) {
     if (!content) return;
     
     const formData = new FormData(form);
-    
-    // Show sending indicator
     const sendBtn = form.querySelector('button[type="submit"]');
-    sendBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Sending...';
+    sendBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
     sendBtn.disabled = true;
     
     fetch(form.action, {
@@ -172,7 +173,9 @@ document.getElementById('chat-form').addEventListener('submit', function(e) {
     .then(response => response.json())
     .then(data => {
         if (data.status === 'success') {
-            // Append message
+            const noMsg = document.querySelector('.no-messages');
+            if (noMsg) noMsg.remove();
+            
             const msgDiv = document.createElement('div');
             msgDiv.className = 'd-flex';
             msgDiv.innerHTML = `
@@ -204,34 +207,15 @@ document.getElementById('message-input').addEventListener('keypress', function(e
     }
 });
 
-// Simple refresh - only check for new messages every 15 seconds
-// This reduces database load
-let lastMessageId = null;
-
-function checkNewMessages() {
-    // Get the last message ID
-    const messages = document.querySelectorAll('.message-bubble');
-    if (messages.length > 0) {
-        const lastMsg = messages[messages.length - 1];
-        // Check if we need to reload
-        // Simple approach: reload page if new messages might exist
-        // This is less efficient but works for development
-        // For production, use WebSockets
-    }
-}
-
-// Refresh page every 30 seconds to check for new messages
-// Reduced from 10 seconds to 30 seconds to reduce load
-setInterval(function() {
-    // Only refresh if the page is visible
-    if (!document.hidden) {
-        location.reload();
-    }
-}, 30000);
-
-// Manual refresh button
 function refreshChat() {
     location.reload();
 }
+
+// Refresh page every 60 seconds
+setInterval(function() {
+    if (!document.hidden) {
+        location.reload();
+    }
+}, 60000);
 </script>
 {% endblock %}

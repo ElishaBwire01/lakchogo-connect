@@ -6,8 +6,12 @@ from django.utils import timezone
 from django.core.paginator import Paginator
 from django.db.models import Q
 from django.contrib.auth import get_user_model
-from .models import Notification, Announcement, ChatRoom, ChatMessage
+from .models import Notification, Announcement, ChatRoom, ChatMessage, MeetingRoom
 from .services import NotificationService, NotificationTriggers
+from datetime import datetime
+import random
+import hashlib
+import time
 
 User = get_user_model()
 
@@ -104,6 +108,13 @@ def get_unread_count(request):
 
 
 @login_required
+def get_unread_count_json(request):
+    """Get unread notification count as JSON for AJAX"""
+    count = NotificationService.get_unread_count(request.user)
+    return JsonResponse({'unread_count': count})
+
+
+@login_required
 def notification_badge(request):
     """Render notification badge for navbar"""
     count = NotificationService.get_unread_count(request.user)
@@ -179,17 +190,14 @@ def announcement_create(request):
 @login_required
 def chat_dashboard(request):
     """Chat dashboard showing all rooms"""
-    # Get all rooms the user is a member of
     chat_rooms = ChatRoom.objects.filter(
         members=request.user,
         is_active=True
     ).order_by('-last_message_time')
     
-    # Get unread counts for each room
     for room in chat_rooms:
         room.unread_count = room.get_unread_count(request.user)
     
-    # Get all users for creating new chat
     users = User.objects.filter(is_active=True).exclude(id=request.user.id)
     
     context = {
@@ -205,19 +213,16 @@ def chat_room(request, room_id):
     """View a specific chat room"""
     room = get_object_or_404(ChatRoom, id=room_id, is_active=True)
     
-    # Check if user is a member
     if not room.members.filter(id=request.user.id).exists():
         messages.error(request, 'You are not a member of this chat room.')
         return redirect('communications:chat_dashboard')
     
-    # Get messages for this room
     messages_list = ChatMessage.objects.filter(
         room=room,
         is_deleted=False
+    ).exclude(
+        message_type='system'
     ).select_related('sender').order_by('created_at')
-    
-    # Mark messages as read (simplified)
-    # In production, you'd use a read receipt model
     
     context = {
         'room': room,
@@ -236,7 +241,6 @@ def send_chat_message(request, room_id):
     if request.method != 'POST':
         return JsonResponse({'status': 'error', 'message': 'Invalid method'}, status=400)
     
-    # Check if user is a member
     if not room.members.filter(id=request.user.id).exists():
         return JsonResponse({'status': 'error', 'message': 'Not a member'}, status=403)
     
@@ -273,12 +277,10 @@ def create_chat_room(request):
         room_type = request.POST.get('room_type', 'group')
         member_ids = request.POST.getlist('member_ids')
         
-        # Validate members
         if not member_ids:
             messages.error(request, 'Please select at least one member.')
             return redirect('communications:chat_dashboard')
         
-        # Include the creator
         members = [request.user]
         for user_id in member_ids:
             try:
@@ -287,11 +289,8 @@ def create_chat_room(request):
             except User.DoesNotExist:
                 pass
         
-        # Check if a group chat already exists with same members
         if room_type == 'group':
-            # Sort member ids for consistent comparison
             member_ids_sorted = sorted([str(m.id) for m in members])
-            # Look for existing room with same members
             existing_rooms = ChatRoom.objects.filter(room_type='group', is_active=True)
             for room in existing_rooms:
                 room_members = list(room.members.all().values_list('id', flat=True))
@@ -299,7 +298,6 @@ def create_chat_room(request):
                     messages.info(request, 'A group chat with these members already exists.')
                     return redirect('communications:chat_room', room_id=room.id)
         
-        # Create room
         room = ChatRoom.objects.create(
             name=room_name or f"Group Chat",
             room_type=room_type,
@@ -307,10 +305,8 @@ def create_chat_room(request):
             is_active=True
         )
         
-        # Add members
         room.members.add(*members)
         
-        # Create system message
         ChatMessage.objects.create(
             room=room,
             sender=request.user,
@@ -329,15 +325,12 @@ def create_direct_chat(request, user_id):
     """Create or get a direct chat with a specific user"""
     other_user = get_object_or_404(User, id=user_id, is_active=True)
     
-    # Check if direct chat already exists
-    # Find room where both users are members and room_type is 'direct'
     rooms = ChatRoom.objects.filter(room_type='direct', is_active=True)
     for room in rooms:
         members = room.members.all()
         if members.count() == 2 and request.user in members and other_user in members:
             return redirect('communications:chat_room', room_id=room.id)
     
-    # Create new direct chat
     room = ChatRoom.objects.create(
         name=f"Chat with {other_user.get_full_name()}",
         room_type='direct',
@@ -346,7 +339,6 @@ def create_direct_chat(request, user_id):
     )
     room.members.add(request.user, other_user)
     
-    # Create system message
     ChatMessage.objects.create(
         room=room,
         sender=request.user,
@@ -365,9 +357,11 @@ def chat_room_details(request, room_id):
     if not room.members.filter(id=request.user.id).exists():
         return JsonResponse({'status': 'error', 'message': 'Access denied'}, status=403)
     
-    messages = ChatMessage.objects.filter(
+    messages_list = ChatMessage.objects.filter(
         room=room,
         is_deleted=False
+    ).exclude(
+        message_type='system'
     ).select_related('sender').order_by('created_at')
     
     data = {
@@ -382,7 +376,7 @@ def chat_room_details(request, room_id):
                 'content': m.content,
                 'created_at': m.created_at.strftime('%Y-%m-%d %H:%M:%S')
             }
-            for m in messages
+            for m in messages_list
         ]
     }
     return JsonResponse(data)
@@ -393,7 +387,6 @@ def delete_chat_message(request, message_id):
     """Delete a chat message (soft delete)"""
     message = get_object_or_404(ChatMessage, id=message_id)
     
-    # Only sender or admin can delete
     if message.sender != request.user and not request.user.is_staff:
         return JsonResponse({'status': 'error', 'message': 'Permission denied'}, status=403)
     
@@ -408,24 +401,274 @@ def get_unread_chat_count(request):
     total_unread = sum([room.get_unread_count(request.user) for room in rooms])
     return JsonResponse({'unread_count': total_unread})
 
-@login_required
-def get_unread_count_json(request):
-    """Get unread notification count as JSON for AJAX"""
-    from .services import NotificationService
-    count = NotificationService.get_unread_count(request.user)
-    return JsonResponse({'unread_count': count})
+
+# ============================================
+# MEETING ROOM VIEWS
+# ============================================
+
+def generate_jitsi_room_id(name, creator_username):
+    """Generate a Jitsi-compatible room ID"""
+    name_slug = name.lower().replace(' ', '-')[:20]
+    name_slug = ''.join(c if c.isalnum() or c == '-' else '-' for c in name_slug)
+    
+    creator = creator_username[:10] if creator_username else 'host'
+    creator = ''.join(c if c.isalnum() else '-' for c in creator)
+    
+    timestamp = str(int(time.time()))[-6:]
+    hash_input = f"{name}{creator}{timestamp}{random.randint(1000, 9999)}"
+    hash_suffix = hashlib.md5(hash_input.encode()).hexdigest()[:6]
+    
+    room_id = f"{name_slug}-{creator}-{timestamp}-{hash_suffix}"
+    room_id = room_id[:50]
+    
+    if not room_id[-1].isalnum():
+        room_id = room_id[:-1] + '0'
+    
+    return room_id
+
 
 @login_required
-def get_unread_count_json(request):
-    """Get unread notification count as JSON for AJAX"""
-    from .services import NotificationService
-    count = NotificationService.get_unread_count(request.user)
-    return JsonResponse({'unread_count': count})
+def create_meeting_room(request, chat_room_id=None):
+    """Create a video meeting room with Jitsi-compatible ID"""
+    chat_room = None
+    if chat_room_id:
+        chat_room = get_object_or_404(ChatRoom, id=chat_room_id)
+        
+        if not chat_room.members.filter(id=request.user.id).exists():
+            messages.error(request, 'You are not a member of this chat room.')
+            return redirect('communications:chat_dashboard')
+    
+    if request.method == 'POST':
+        name = request.POST.get('name')
+        description = request.POST.get('description')
+        scheduled_start_str = request.POST.get('scheduled_start')
+        scheduled_end_str = request.POST.get('scheduled_end')
+        attendee_ids = request.POST.getlist('attendee_ids')
+        send_notifications = request.POST.get('send_notifications') == 'on'
+        
+        if not name:
+            messages.error(request, 'Meeting name is required.')
+            return render(request, 'communications/meeting/create.html', {
+                'chat_room': chat_room,
+                'users': User.objects.filter(is_active=True).exclude(id=request.user.id)
+            })
+        
+        # Convert string to datetime
+        scheduled_start = None
+        scheduled_end = None
+        
+        if scheduled_start_str:
+            try:
+                scheduled_start = datetime.strptime(scheduled_start_str, '%Y-%m-%dT%H:%M')
+                scheduled_start = timezone.make_aware(scheduled_start)
+            except ValueError:
+                pass
+        
+        if scheduled_end_str:
+            try:
+                scheduled_end = datetime.strptime(scheduled_end_str, '%Y-%m-%dT%H:%M')
+                scheduled_end = timezone.make_aware(scheduled_end)
+            except ValueError:
+                pass
+        
+        # Create meeting room - room_code will be auto-generated by save()
+        meeting = MeetingRoom.objects.create(
+            name=name,
+            description=description,
+            chat_room=chat_room,
+            created_by=request.user,
+            scheduled_start=scheduled_start,
+            scheduled_end=scheduled_end,
+            status='active'
+        )
+        
+        # Add attendees
+        if attendee_ids:
+            users = User.objects.filter(id__in=attendee_ids)
+            meeting.attendees.add(*users)
+        elif chat_room:
+            meeting.attendees.add(*chat_room.members.all())
+        
+        # Send notifications if enabled
+        if send_notifications:
+            notification_count = 0
+            date_str = "Schedule TBD"
+            if meeting.scheduled_start:
+                try:
+                    date_str = meeting.scheduled_start.strftime("%B %d, %Y at %H:%M")
+                except:
+                    date_str = str(meeting.scheduled_start)
+            
+            for attendee in meeting.attendees.all():
+                if attendee != request.user:
+                    Notification.create_notification(
+                        recipient=attendee,
+                        notification_type='meeting_scheduled',
+                        title=f'🎥 Video Meeting Invitation: {meeting.name}',
+                        message=f'{request.user.get_full_name()} has invited you to a video meeting: {meeting.name}\n'
+                               f'📅 {date_str}\n'
+                               f'🔑 Join URL: {meeting.meeting_url}\n'
+                               f'📝 {meeting.description[:100] if meeting.description else "No description"}',
+                        action_url=f'/communications/meeting/{meeting.id}/',
+                        related_id=meeting.id,
+                        related_model='MeetingRoom',
+                        priority='high'
+                    )
+                    notification_count += 1
+            
+            messages.success(request, f'Meeting "{meeting.name}" created successfully! {notification_count} notifications sent.')
+        else:
+            messages.success(request, f'Meeting "{meeting.name}" created successfully!')
+        
+        return redirect('communications:meeting_room', meeting_id=meeting.id)
+    
+    # Generate Jitsi-compatible meeting ID for display
+    name_slug = 'meeting'
+    creator = request.user.username[:10]
+    timestamp = str(int(time.time()))[-6:]
+    hash_suffix = hashlib.md5(f"{name_slug}{creator}{timestamp}{random.randint(1000, 9999)}".encode()).hexdigest()[:6]
+    auto_meeting_id = f"{name_slug}-{creator}-{timestamp}-{hash_suffix}"
+    
+    users = User.objects.filter(is_active=True).exclude(id=request.user.id)
+    
+    context = {
+        'title': 'Create Video Meeting',
+        'chat_room': chat_room,
+        'users': users,
+        'auto_meeting_id': auto_meeting_id,
+        'jitsi_domain': 'meet.jit.si',
+    }
+    return render(request, 'communications/meeting/create.html', context)
+
 
 @login_required
-def get_unread_chat_count(request):
-    """Get unread chat messages count for the user"""
-    from .models import ChatRoom
-    rooms = ChatRoom.objects.filter(members=request.user, is_active=True)
-    total_unread = sum([room.get_unread_count(request.user) for room in rooms])
-    return JsonResponse({'unread_count': total_unread})
+def meeting_room(request, meeting_id):
+    """View a meeting room"""
+    meeting = get_object_or_404(MeetingRoom, id=meeting_id)
+    
+    if not meeting.attendees.filter(id=request.user.id).exists() and meeting.created_by != request.user:
+        messages.error(request, 'You are not invited to this meeting.')
+        return redirect('communications:chat_dashboard')
+    
+    context = {
+        'title': f'Meeting: {meeting.name}',
+        'meeting': meeting,
+        'attendees': meeting.attendees.all(),
+    }
+    return render(request, 'communications/meeting/room.html', context)
+
+
+@login_required
+def meeting_list(request):
+    """List all meeting rooms"""
+    meetings = MeetingRoom.objects.filter(
+        Q(attendees=request.user) | Q(created_by=request.user),
+        status='active'
+    ).distinct().order_by('-created_at')
+    
+    paginator = Paginator(meetings, 10)
+    page = request.GET.get('page')
+    meetings_page = paginator.get_page(page)
+    
+    context = {
+        'title': 'My Meetings',
+        'meetings': meetings_page,
+    }
+    return render(request, 'communications/meeting/list.html', context)
+
+
+@login_required
+def join_meeting(request, meeting_id):
+    """Join a meeting - redirect to Jitsi meet"""
+    meeting = get_object_or_404(MeetingRoom, id=meeting_id)
+    
+    if not meeting.attendees.filter(id=request.user.id).exists() and meeting.created_by != request.user:
+        messages.error(request, 'You are not invited to this meeting.')
+        return redirect('communications:chat_dashboard')
+    
+    if not meeting.attendees.filter(id=request.user.id).exists():
+        meeting.attendees.add(request.user)
+    
+    # Generate meeting link with host identification
+    meeting_url = meeting.get_meeting_link(request.user)
+    
+    return redirect(meeting_url)
+
+
+@login_required
+def end_meeting(request, meeting_id):
+    """End a meeting (only creator)"""
+    meeting = get_object_or_404(MeetingRoom, id=meeting_id)
+    
+    if meeting.created_by != request.user:
+        messages.error(request, 'Only the meeting creator can end the meeting.')
+        return redirect('communications:meeting_room', meeting_id=meeting.id)
+    
+    if request.method == 'POST':
+        meeting.status = 'ended'
+        meeting.is_active = False
+        meeting.save()
+        
+        for attendee in meeting.attendees.all():
+            if attendee != request.user:
+                Notification.create_notification(
+                    recipient=attendee,
+                    notification_type='meeting_cancelled',
+                    title=f'📢 Meeting Ended: {meeting.name}',
+                    message=f'The meeting "{meeting.name}" has been ended by {request.user.get_full_name()}.',
+                    action_url='/communications/meetings/',
+                    related_id=meeting.id,
+                    related_model='MeetingRoom',
+                    priority='high'
+                )
+        
+        messages.success(request, 'Meeting ended successfully.')
+        return redirect('communications:meeting_list')
+    
+    context = {
+        'meeting': meeting,
+        'title': f'End Meeting: {meeting.name}',
+    }
+    return render(request, 'communications/meeting/end.html', context)
+
+
+@login_required
+def send_meeting_reminder(request, meeting_id):
+    """Send reminder notifications to attendees"""
+    meeting = get_object_or_404(MeetingRoom, id=meeting_id)
+    
+    if meeting.created_by != request.user:
+        messages.error(request, 'Only the meeting creator can send reminders.')
+        return redirect('communications:meeting_room', meeting_id=meeting.id)
+    
+    if request.method == 'POST':
+        reminder_count = 0
+        date_str = "soon"
+        if meeting.scheduled_start:
+            try:
+                date_str = meeting.scheduled_start.strftime("%B %d, %Y at %H:%M")
+            except:
+                date_str = str(meeting.scheduled_start)
+        
+        for attendee in meeting.attendees.all():
+            if attendee != request.user:
+                Notification.create_notification(
+                    recipient=attendee,
+                    notification_type='meeting_reminder',
+                    title=f'⏰ Reminder: {meeting.name}',
+                    message=f'Reminder: Your meeting "{meeting.name}" is scheduled for {date_str}.',
+                    action_url=f'/communications/meeting/{meeting.id}/',
+                    related_id=meeting.id,
+                    related_model='MeetingRoom',
+                    priority='high'
+                )
+                reminder_count += 1
+        
+        messages.success(request, f'Reminders sent to {reminder_count} attendees!')
+        return redirect('communications:meeting_room', meeting_id=meeting.id)
+    
+    context = {
+        'meeting': meeting,
+        'title': f'Send Reminder: {meeting.name}',
+    }
+    return render(request, 'communications/meeting/send_reminder.html', context)

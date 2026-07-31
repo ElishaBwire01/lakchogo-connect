@@ -3,7 +3,7 @@ from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.http import JsonResponse
 from django.db.models import Count, Q, Sum
-from django.core.paginator import Paginator
+from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.utils import timezone
 from .models import ComplianceRule, ComplianceScore, ComplianceAlert, ComplianceReport
 from members.models import Member
@@ -14,17 +14,14 @@ def index(request):
     """Compliance dashboard"""
     total_members = Member.objects.filter(status='active').count()
     
-    # Get compliance statistics
     green = ComplianceScore.objects.filter(status='green').count()
     yellow = ComplianceScore.objects.filter(status='yellow').count()
     red = ComplianceScore.objects.filter(status='red').count()
     
-    # Get recent alerts
     recent_alerts = ComplianceAlert.objects.filter(
         is_resolved=False
     ).order_by('-created_at')[:10]
     
-    # Get compliance rate
     compliance_rate = (green / total_members * 100) if total_members > 0 else 0
     
     context = {
@@ -42,7 +39,7 @@ def index(request):
 
 @login_required
 def scorecard(request):
-    """View member compliance scorecard"""
+    """View member compliance scorecard with pagination"""
     members = Member.objects.filter(status='active')
     
     # Get search query
@@ -82,11 +79,26 @@ def scorecard(request):
     if status_filter and status_filter != 'all':
         member_data = [m for m in member_data if m['status'] == status_filter]
     
+    # Pagination
+    paginator = Paginator(member_data, 20)  # Show 20 members per page
+    page = request.GET.get('page')
+    
+    try:
+        members_page = paginator.page(page)
+    except PageNotAnInteger:
+        members_page = paginator.page(1)
+    except EmptyPage:
+        members_page = paginator.page(paginator.num_pages)
+    
     context = {
         'title': 'Compliance Scorecard',
-        'members': member_data,
+        'members': members_page,
         'query': query,
         'status_filter': status_filter,
+        'paginator': paginator,
+        'total_members': len(member_data),
+        'start_index': (members_page.number - 1) * 20 + 1,
+        'end_index': min(members_page.number * 20, len(member_data)),
     }
     return render(request, 'compliance/scorecard.html', context)
 
@@ -97,13 +109,11 @@ def member_status(request, member_id):
     member = get_object_or_404(Member, member_id=member_id)
     score = get_object_or_404(ComplianceScore, member=member)
     
-    # Get alerts for this member
     alerts = ComplianceAlert.objects.filter(
         member=member,
         is_resolved=False
     ).order_by('-created_at')
     
-    # Get compliance history (last 30 days)
     history = ComplianceService.get_member_history(member)
     
     context = {
@@ -168,17 +178,15 @@ def create_rule(request):
 
 @login_required
 def alerts(request):
-    """View all compliance alerts"""
+    """View all compliance alerts with pagination"""
     alerts = ComplianceAlert.objects.all().order_by('-created_at')
     
-    # Filter by resolved status
     resolved = request.GET.get('resolved')
     if resolved == 'true':
         alerts = alerts.filter(is_resolved=True)
     elif resolved == 'false':
         alerts = alerts.filter(is_resolved=False)
     
-    # Filter by member
     member_id = request.GET.get('member')
     if member_id:
         alerts = alerts.filter(member__member_id=member_id)
@@ -297,3 +305,74 @@ def check_member(request, member_id):
         'member': member,
     }
     return render(request, 'compliance/check_member.html', context)
+
+@login_required
+def scorecard(request):
+    """View member compliance scorecard with pagination"""
+    members = Member.objects.filter(status='active')
+    
+    query = request.GET.get('q')
+    if query:
+        members = members.filter(
+            Q(user__first_name__icontains=query) |
+            Q(user__last_name__icontains=query) |
+            Q(member_id__icontains=query)
+        )
+    
+    member_data = []
+    for member in members:
+        try:
+            score = ComplianceScore.objects.get(member=member)
+            member_data.append({
+                'member': member,
+                'score': score,
+                'status': score.status,
+                'payment_score': score.payment_compliance,
+                'attendance_score': score.attendance_compliance,
+                'warnings': score.warnings,
+            })
+        except ComplianceScore.DoesNotExist:
+            member_data.append({
+                'member': member,
+                'score': None,
+                'status': 'unknown',
+                'payment_score': 0,
+                'attendance_score': 0,
+                'warnings': [],
+            })
+    
+    status_filter = request.GET.get('status')
+    if status_filter and status_filter != 'all':
+        member_data = [m for m in member_data if m['status'] == status_filter]
+    
+    # Calculate status counts
+    green_count = sum(1 for m in member_data if m['status'] == 'green')
+    yellow_count = sum(1 for m in member_data if m['status'] == 'yellow')
+    red_count = sum(1 for m in member_data if m['status'] == 'red')
+    unknown_count = sum(1 for m in member_data if m['status'] == 'unknown')
+    
+    paginator = Paginator(member_data, 20)
+    page = request.GET.get('page')
+    
+    try:
+        members_page = paginator.page(page)
+    except PageNotAnInteger:
+        members_page = paginator.page(1)
+    except EmptyPage:
+        members_page = paginator.page(paginator.num_pages)
+    
+    context = {
+        'title': 'Compliance Scorecard',
+        'members': members_page,
+        'query': query,
+        'status_filter': status_filter,
+        'paginator': paginator,
+        'total_members': len(member_data),
+        'start_index': (members_page.number - 1) * 20 + 1,
+        'end_index': min(members_page.number * 20, len(member_data)),
+        'green_count': green_count,
+        'yellow_count': yellow_count,
+        'red_count': red_count,
+        'unknown_count': unknown_count,
+    }
+    return render(request, 'compliance/scorecard.html', context)

@@ -1,0 +1,29 @@
+{% extends 'base_dashboard.html' %}
+
+{% block title %}End Meeting - {{ meeting.name }}{% endblock %}
+
+{% block dashboard_content %}
+<div class="row">
+    <div class="col-md-6 mx-auto">
+        <div class="card">
+            <div class="card-body text-center">
+                <i class="fas fa-exclamation-triangle fa-4x text-warning mb-3"></i>
+                <h4>End Meeting: {{ meeting.name }}</h4>
+                <p>Are you sure you want to end this meeting?</p>
+                <p class="text-muted">This will notify all attendees and they will no longer be able to join.</p>
+                <form method="post">
+                    {% csrf_token %}
+                    <div class="d-grid gap-2 d-md-flex justify-content-center">
+                        <button type="submit" class="btn btn-danger">
+                            <i class="fas fa-stop"></i> Yes, End Meeting
+                        </button>
+                        <a href="{% url 'communications:meeting_room' meeting.id %}" class="btn btn-secondary">
+                            Cancel
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

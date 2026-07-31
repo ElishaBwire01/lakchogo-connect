@@ -2,6 +2,13 @@ from django.db import models
 from django.conf import settings
 from django.utils import timezone
 from core.models import BaseModel
+import jwt
+import random
+import string
+from datetime import datetime, timedelta
+import hashlib
+import time
+
 
 class Notification(BaseModel):
     """Notification model for system alerts"""
@@ -63,7 +70,7 @@ class Notification(BaseModel):
         ('urgent', 'Urgent'),
     ))
     related_id = models.IntegerField(null=True, blank=True)
-    related_model = models.CharField(max_length=50, blank=True, null=True)  # Made nullable
+    related_model = models.CharField(max_length=50, blank=True, null=True)
     
     class Meta:
         db_table = 'notifications'
@@ -86,15 +93,10 @@ class Notification(BaseModel):
         self.sent_at = timezone.now()
         self.save()
     
-    def mark_as_delivered(self):
-        self.status = 'delivered'
-        self.save()
-    
     @classmethod
     def create_notification(cls, recipient, notification_type, title, message, 
                            action_url=None, priority='normal', related_id=None, 
                            related_model=None, channel='in_app'):
-        """Create a notification"""
         notification = cls.objects.create(
             recipient=recipient,
             notification_type=notification_type,
@@ -104,7 +106,7 @@ class Notification(BaseModel):
             priority=priority,
             action_url=action_url,
             related_id=related_id,
-            related_model=related_model,  # Can be None now
+            related_model=related_model,
             status='pending'
         )
         if channel == 'in_app':
@@ -115,7 +117,6 @@ class Notification(BaseModel):
     def create_bulk_notifications(cls, recipients, notification_type, title, message,
                                   action_url=None, priority='normal', related_id=None,
                                   related_model=None, channel='in_app'):
-        """Create notifications for multiple recipients"""
         notifications = []
         for recipient in recipients:
             notifications.append(
@@ -128,15 +129,11 @@ class Notification(BaseModel):
                     priority=priority,
                     action_url=action_url,
                     related_id=related_id,
-                    related_model=related_model,  # Can be None now
+                    related_model=related_model,
                     status='pending'
                 )
             )
-        created = cls.objects.bulk_create(notifications)
-        if channel == 'in_app':
-            for notification in created:
-                notification.mark_as_sent()
-        return created
+        return cls.objects.bulk_create(notifications)
 
 
 class Announcement(BaseModel):
@@ -162,34 +159,10 @@ class Announcement(BaseModel):
     
     def __str__(self):
         return self.title
-    
-    def publish(self):
-        self.is_published = True
-        self.published_at = timezone.now()
-        self.save()
-        
-        from django.contrib.auth import get_user_model
-        User = get_user_model()
-        users = User.objects.filter(is_active=True)
-        
-        notifications = []
-        for user in users:
-            notifications.append(
-                Notification(
-                    recipient=user,
-                    notification_type='announcement',
-                    title=f"📢 New Announcement: {self.title}",
-                    message=self.content[:200],
-                    action_url=f'/communications/announcements/{self.id}/',
-                    status='sent',
-                    sent_at=timezone.now()
-                )
-            )
-        Notification.objects.bulk_create(notifications)
 
 
 class ChatRoom(BaseModel):
-    """Chat room for group conversations"""
+    """Chat room for conversations"""
     ROOM_TYPES = (
         ('direct', 'Direct Message'),
         ('group', 'Group Chat'),
@@ -230,13 +203,10 @@ class ChatRoom(BaseModel):
         return self.name or f"Room {self.id}"
     
     def get_unread_count(self, user):
-        from .models import ChatMessage
         return ChatMessage.objects.filter(
             room=self,
             is_deleted=False
-        ).exclude(
-            sender=user
-        ).count()
+        ).exclude(sender=user).count()
 
 
 class ChatMessage(BaseModel):
@@ -280,19 +250,73 @@ class ChatMessage(BaseModel):
         self.is_deleted = True
         self.deleted_at = timezone.now()
         self.save()
+
+
+class MeetingRoom(BaseModel):
+    """Video meeting rooms for chat"""
+    ROOM_STATUS = (
+        ('active', 'Active'),
+        ('inactive', 'Inactive'),
+        ('ended', 'Ended'),
+    )
+    
+    name = models.CharField(max_length=200)
+    description = models.TextField(blank=True)
+    chat_room = models.ForeignKey(
+        ChatRoom,
+        on_delete=models.CASCADE,
+        related_name='meeting_rooms',
+        null=True,
+        blank=True
+    )
+    created_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='created_meeting_rooms'
+    )
+    room_code = models.CharField(max_length=50, unique=True, blank=True)
+    status = models.CharField(max_length=20, choices=ROOM_STATUS, default='active')
+    scheduled_start = models.DateTimeField(null=True, blank=True)
+    scheduled_end = models.DateTimeField(null=True, blank=True)
+    attendees = models.ManyToManyField(
+        settings.AUTH_USER_MODEL,
+        related_name='meeting_rooms',
+        blank=True
+    )
+    meeting_url = models.URLField(blank=True)
+    is_active = models.BooleanField(default=True)
+    
+    class Meta:
+        db_table = 'meeting_rooms'
+        ordering = ['-created_at']
+        verbose_name = 'Meeting Room'
+        verbose_name_plural = 'Meeting Rooms'
+    
+    def __str__(self):
+        return f"{self.name} - {self.room_code}"
     
     def save(self, *args, **kwargs):
-        is_new = self.pk is None
+        if not self.room_code:
+            timestamp = str(int(time.time()))[-8:]
+            random_part = ''.join(random.choices(string.ascii_lowercase + string.digits, k=6))
+            name_slug = self.name.lower().replace(' ', '-')[:15]
+            name_slug = ''.join(c if c.isalnum() or c == '-' else '-' for c in name_slug)
+            self.room_code = f"{name_slug}-{timestamp}-{random_part}"[:50]
+        if not self.meeting_url:
+            self.meeting_url = f"https://meet.jit.si/{self.room_code}"
         super().save(*args, **kwargs)
-        
-        if is_new and self.room:
-            self.room.last_message = self
-            self.room.last_message_time = self.created_at
-            self.room.save()
-            
-            from .services import NotificationTriggers
-            for member in self.room.members.exclude(id=self.sender.id):
-                NotificationTriggers.chat_message_notification(
-                    message=self,
-                    recipient=member
-                )
+    
+    def get_meeting_link(self, user=None):
+        meeting_id = self.room_code
+        base_url = f"https://meet.jit.si/{meeting_id}"
+        params = []
+        if user:
+            params.append(f"userName={user.get_full_name()}")
+        params.append("config.prejoinPageEnabled=false")
+        params.append("config.enableWelcomePage=false")
+        params.append("interfaceConfig.APP_NAME=LakChogo Connect")
+        is_host = user and user.id == self.created_by.id
+        if is_host:
+            params.append("config.startWithAudioMuted=false")
+            params.append("config.startWithVideoMuted=false")
+        return f"{base_url}?{'&'.join(params)}" if params else base_url

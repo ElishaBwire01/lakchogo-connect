@@ -28,4 +28,13 @@ urlpatterns = [
     path('chat/message/<int:message_id>/delete/', views.delete_chat_message, name='delete_message'),
     path('chat/unread-count/', views.get_unread_chat_count, name='unread_chat_count'),
     path('chat/<int:room_id>/details/', views.chat_room_details, name='chat_room_details'),
+    
+    # Meeting Rooms
+    path('meetings/', views.meeting_list, name='meeting_list'),
+    path('meeting/create/', views.create_meeting_room, name='create_meeting'),
+    path('meeting/create/<int:chat_room_id>/', views.create_meeting_room, name='create_meeting_from_chat'),
+    path('meeting/<int:meeting_id>/', views.meeting_room, name='meeting_room'),
+    path('meeting/<int:meeting_id>/join/', views.join_meeting, name='join_meeting'),
+    path('meeting/<int:meeting_id>/end/', views.end_meeting, name='end_meeting'),
+    path('meeting/<int:meeting_id>/send-reminder/', views.send_meeting_reminder, name='send_meeting_reminder'),
 ]

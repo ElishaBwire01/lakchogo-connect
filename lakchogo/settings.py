@@ -195,3 +195,12 @@ if 'sqlite3' in DATABASES['default']['ENGINE']:
     # Enable WAL mode (Write-Ahead Logging) for better concurrency
     import sqlite3
     sqlite3.enable_callback_tracebacks(True)
+
+# Jitsi Meet Configuration
+JITSI_CONFIG = {
+    'DOMAIN': 'meet.jit.si',
+    'JWT_SECRET': 'lakchogo-jitsi-secret-key-2026',  # Change this in production
+    'APP_NAME': 'LakChogo Connect',
+    'ENABLE_PREJOIN_PAGE': False,
+    'ENABLE_WELCOME_PAGE': False,
+}
