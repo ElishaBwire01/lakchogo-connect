@@ -1,0 +1,23 @@
+{
+  "generated_at": "2026-07-31T10:01:26.514024",
+  "members": {
+    "total": 68,
+    "active": 68,
+    "pending": 0,
+    "inactive": 0
+  },
+  "payments": {
+    "total": 56,
+    "pending": 16
+  },
+  "meetings": {
+    "total": 5,
+    "scheduled": 2,
+    "completed": 3
+  },
+  "compliance": {
+    "green": 8,
+    "yellow": 0,
+    "red": 60
+  }
+}

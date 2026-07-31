@@ -9,7 +9,6 @@ import sys
 import django
 import subprocess
 
-# Set up Django environment
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'lakchogo.settings')
 django.setup()
@@ -43,7 +42,6 @@ def reset_migrations():
     for app in apps:
         migrations_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), app, 'migrations')
         if os.path.exists(migrations_dir):
-            # Keep __init__.py
             for file in os.listdir(migrations_dir):
                 if file != '__init__.py' and file.endswith('.py'):
                     os.remove(os.path.join(migrations_dir, file))
@@ -96,8 +94,6 @@ def fix_migration_dependencies():
     print("=" * 60)
     
     print("\n🔧 Fixing migration dependencies...")
-    
-    # Run migrations with fake-initial for consistency
     try:
         call_command('migrate', '--fake-initial', verbosity=0)
         print("  ✅ Migration dependencies fixed!")
@@ -107,7 +103,6 @@ def fix_migration_dependencies():
     print("\n" + "=" * 60)
 
 def show_help():
-    """Show help"""
     print("=" * 60)
     print("LAKCHOGO CONNECT - MIGRATION HELPERS")
     print("=" * 60)

@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Compliance Alert</title>
+</head>
+<body style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background: #f4f4f4;">
+    <div style="background: white; padding: 30px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+        <div style="text-align: center; border-bottom: 3px solid #dc3545; padding-bottom: 20px;">
+            <h1 style="color: #dc3545; margin: 0;">⚠️ Compliance Alert</h1>
+            <p style="color: #666; margin: 5px 0 0;">LakChogo Connect</p>
+        </div>
+        <div style="padding: 20px 0;">
+            <h2>Dear {{ member.get_full_name }},</h2>
+            <p>Your compliance status requires attention.</p>
+            <div style="background: #f8f9fa; padding: 15px; border-radius: 5px; margin: 15px 0;">
+                <p><strong>Status:</strong> 
+                    <span style="color: {% if score.status == 'red' %}red{% elif score.status == 'yellow' %}orange{% else %}green{% endif %}; font-weight: bold;">
+                        {{ score.get_status_display|upper }}
+                    </span>
+                </p>
+                <p><strong>Score:</strong> {{ score.score }}%</p>
+                <p><strong>Payment Compliance:</strong> {{ score.payment_compliance }}%</p>
+                <p><strong>Attendance Compliance:</strong> {{ score.attendance_compliance }}%</p>
+            </div>
+            {% if score.warnings %}
+            <h4>Warnings</h4>
+            <ul>
+                {% for warning in score.warnings %}
+                <li>{{ warning }}</li>
+                {% endfor %}
+            </ul>
+            {% endif %}
+            <div style="background: #fff3cd; padding: 15px; border-radius: 5px; margin: 15px 0;">
+                <p><strong>What to do:</strong></p>
+                <ul>
+                    <li>Make outstanding payments</li>
+                    <li>Attend upcoming meetings</li>
+                    <li>Contact committee for assistance</li>
+                </ul>
+            </div>
+            <p style="text-align: center;">
+                <a href="{{ compliance_url }}" style="background: #0d6efd; color: white; padding: 12px 30px; text-decoration: none; border-radius: 5px; display: inline-block;">
+                    View Compliance Status
+                </a>
+            </p>
+        </div>
+        <div style="border-top: 1px solid #ddd; padding-top: 15px; text-align: center; color: #666; font-size: 12px;">
+            <p>&copy; 2026 Lak Chogo Welfare Group</p>
+        </div>
+    </div>
+</body>
+</html>

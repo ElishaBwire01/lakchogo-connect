@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Meeting Reminder</title>
+</head>
+<body style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background: #f4f4f4;">
+    <div style="background: white; padding: 30px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+        <div style="text-align: center; border-bottom: 3px solid #ffc107; padding-bottom: 20px;">
+            <h1 style="color: #ffc107; margin: 0;">Meeting Reminder</h1>
+            <p style="color: #666; margin: 5px 0 0;">LakChogo Connect</p>
+        </div>
+        <div style="padding: 20px 0;">
+            <h2>{{ meeting.title }}</h2>
+            <div style="background: #f8f9fa; padding: 15px; border-radius: 5px; margin: 15px 0;">
+                <p><strong>📅 Date:</strong> {{ meeting.date|date:"F d, Y" }}</p>
+                <p><strong>⏰ Time:</strong> {{ meeting.date|date:"H:i" }}</p>
+                <p><strong>📍 Venue:</strong> {{ meeting.venue }}</p>
+            </div>
+            {% if meeting.agenda %}
+            <h4>Agenda</h4>
+            <p>{{ meeting.agenda|linebreaks }}</p>
+            {% endif %}
+            <div style="background: #fff3cd; padding: 15px; border-radius: 5px; margin: 15px 0;">
+                <p><strong>⚠️ Please Note:</strong> Your attendance is important. Please arrive on time.</p>
+            </div>
+            <p style="text-align: center;">
+                <a href="{{ meeting_url }}" style="background: #ffc107; color: #000; padding: 12px 30px; text-decoration: none; border-radius: 5px; display: inline-block;">
+                    View Meeting Details
+                </a>
+            </p>
+        </div>
+        <div style="border-top: 1px solid #ddd; padding-top: 15px; text-align: center; color: #666; font-size: 12px;">
+            <p>&copy; 2026 Lak Chogo Welfare Group</p>
+        </div>
+    </div>
+</body>
+</html>

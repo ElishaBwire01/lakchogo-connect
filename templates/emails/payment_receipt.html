@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Payment Receipt</title>
+</head>
+<body style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background: #f4f4f4;">
+    <div style="background: white; padding: 30px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+        <div style="text-align: center; border-bottom: 3px solid #198754; padding-bottom: 20px;">
+            <h1 style="color: #198754; margin: 0;">Payment Receipt</h1>
+            <p style="color: #666; margin: 5px 0 0;">LakChogo Connect</p>
+        </div>
+        <div style="padding: 20px 0;">
+            <div style="display: flex; justify-content: space-between; margin-bottom: 20px;">
+                <div>
+                    <p><strong>Receipt No:</strong> {{ receipt.receipt_number }}</p>
+                    <p><strong>Date:</strong> {{ receipt.generated_at|date:"F d, Y H:i" }}</p>
+                </div>
+                <div style="text-align: right;">
+                    <p><strong>Status:</strong> <span style="color: #198754;">✅ PAID</span></p>
+                </div>
+            </div>
+            <h3>Member Information</h3>
+            <p><strong>Name:</strong> {{ payment.member.get_full_name }}</p>
+            <p><strong>Member ID:</strong> {{ payment.member.member_id }}</p>
+            <p><strong>Phone:</strong> {{ payment.member.user.phone }}</p>
+            <hr>
+            <h3>Payment Details</h3>
+            <table style="width: 100%; border-collapse: collapse;">
+                <tr style="background: #f8f9fa;">
+                    <th style="padding: 10px; text-align: left;">Description</th>
+                    <th style="padding: 10px; text-align: right;">Amount</th>
+                </tr>
+                <tr>
+                    <td style="padding: 10px; border-bottom: 1px solid #ddd;">{{ payment.category.name }}</td>
+                    <td style="padding: 10px; border-bottom: 1px solid #ddd; text-align: right;">KES {{ payment.amount|floatformat:0 }}</td>
+                </tr>
+                <tr>
+                    <td style="padding: 10px; font-weight: bold;">Total</td>
+                    <td style="padding: 10px; font-weight: bold; text-align: right;">KES {{ payment.amount|floatformat:0 }}</td>
+                </tr>
+            </table>
+            <p><strong>Payment Method:</strong> {{ payment.get_payment_method_display }}</p>
+            <p><strong>Transaction Ref:</strong> {{ payment.transaction_ref|default:"N/A" }}</p>
+            <hr>
+            <div style="text-align: center; color: #666; font-size: 12px;">
+                <p>Thank you for your contribution!</p>
+                <p>This is a computer-generated receipt.</p>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

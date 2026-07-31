@@ -18,7 +18,7 @@ django.setup()
 
 from django.contrib.auth import get_user_model
 from accounts.models import Role
-from members.models import Member
+from members.models import Member, MemberContributionSummary
 from finance.models import PaymentCategory, Payment
 from meetings.models import Meeting, Attendance
 from compliance.models import ComplianceScore
@@ -53,7 +53,6 @@ def seed_members(count=20):
         username = f"{first_name.lower()}.{last_name.lower()}{i+1}"
         phone = generate_phone()
         
-        # Check if user already exists
         if User.objects.filter(phone=phone).exists():
             continue
         
@@ -67,7 +66,6 @@ def seed_members(count=20):
             password='Test123456'
         )
         
-        # Create member - ComplianceScore will be created automatically by signal
         member = Member.objects.create(
             user=user,
             status='active',
@@ -78,19 +76,17 @@ def seed_members(count=20):
             occupation=random.choice(['Teacher', 'Doctor', 'Engineer', 'Business', 'Farmer', 'Student'])
         )
         
-        # Update compliance score if it exists (don't create if already exists)
-        try:
-            score = ComplianceScore.objects.get(member=member)
-            score.status = random.choice(['green', 'yellow', 'red'])
-            score.score = random.randint(60, 100)
-            score.save()
-        except ComplianceScore.DoesNotExist:
-            # Create if not exists (should be created by signal, but just in case)
-            ComplianceScore.objects.create(
-                member=member,
-                status=random.choice(['green', 'yellow', 'red']),
-                score=random.randint(60, 100)
-            )
+        # Create contribution summary
+        MemberContributionSummary.objects.get_or_create(member=member)
+        
+        # Create compliance score
+        ComplianceScore.objects.get_or_create(
+            member=member,
+            defaults={
+                'status': random.choice(['green', 'yellow', 'red']),
+                'score': random.randint(60, 100)
+            }
+        )
         
         created += 1
         if (i+1) % 5 == 0:
@@ -108,7 +104,6 @@ def seed_payments(member_count=20):
     members = Member.objects.filter(status='active')[:member_count]
     
     for member in members:
-        # Create 2-5 payments per member
         num_payments = random.randint(2, 5)
         for _ in range(num_payments):
             category = random.choice(categories)
@@ -120,7 +115,8 @@ def seed_payments(member_count=20):
                 amount=amount if amount > 0 else 100,
                 payment_method=random.choice(['cash', 'mpesa', 'airtel']),
                 status=random.choice(['completed', 'completed', 'completed', 'pending']),
-                notes=f"Payment for {category.name}"
+                notes=f"Payment for {category.name}",
+                recorded_by=User.objects.filter(is_superuser=True).first()
             )
             created += 1
     
@@ -145,7 +141,6 @@ def seed_meetings(count=5):
         )
         created += 1
         
-        # Add attendance for some members
         if random.choice([True, False]):
             members = Member.objects.filter(status='active')[:random.randint(5, 15)]
             for member in members:
@@ -164,19 +159,16 @@ def seed_all():
     print("LAKCHOGO CONNECT - DATA SEEDER")
     print("=" * 60)
     
-    # Check if data already exists
     if Member.objects.count() > 0:
         confirm = input(f"\n⚠️ {Member.objects.count()} members already exist. Continue? (y/n): ")
         if confirm.lower() != 'y':
             print("❌ Seeding cancelled.")
             return
     
-    # Seed data
     members_count = seed_members(20)
     payments_count = seed_payments(members_count)
     meetings_count = seed_meetings(5)
     
-    # Summary
     print("\n" + "=" * 60)
     print("✅ SEEDING COMPLETE!")
     print("=" * 60)

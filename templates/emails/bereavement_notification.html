@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Bereavement Notification</title>
+</head>
+<body style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background: #f4f4f4;">
+    <div style="background: white; padding: 30px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+        <div style="text-align: center; border-bottom: 3px solid #6c757d; padding-bottom: 20px;">
+            <h1 style="color: #6c757d; margin: 0;">🕊️ Bereavement Notification</h1>
+            <p style="color: #666; margin: 5px 0 0;">LakChogo Connect</p>
+        </div>
+        <div style="padding: 20px 0;">
+            <h2>Our Sincere Condolences</h2>
+            <p>We are saddened to inform you of the passing of:</p>
+            <div style="background: #f8f9fa; padding: 15px; border-radius: 5px; margin: 15px 0;">
+                <p><strong>Deceased:</strong> {{ event.deceased_name }}</p>
+                <p><strong>Member:</strong> {{ event.member.get_full_name }}</p>
+                <p><strong>Relationship:</strong> {{ event.relationship }}</p>
+                <p><strong>Date of Death:</strong> {{ event.date_of_death|date:"F d, Y" }}</p>
+            </div>
+            <h4>Collection Details</h4>
+            <div style="background: #f8f9fa; padding: 15px; border-radius: 5px; margin: 15px 0;">
+                <p><strong>Target:</strong> KES {{ event.collection_target|floatformat:0 }}</p>
+                <p><strong>Collected:</strong> KES {{ event.amount_collected|floatformat:0 }}</p>
+                <p><strong>Progress:</strong> {{ event.progress_percentage }}%</p>
+                <div style="background: #e9ecef; border-radius: 5px; height: 20px; margin: 10px 0;">
+                    <div style="background: #198754; width: {{ event.progress_percentage }}%; height: 20px; border-radius: 5px;"></div>
+                </div>
+            </div>
+            <p style="text-align: center;">
+                <a href="{{ welfare_url }}" style="background: #6c757d; color: white; padding: 12px 30px; text-decoration: none; border-radius: 5px; display: inline-block;">
+                    View Welfare Event
+                </a>
+            </p>
+        </div>
+        <div style="border-top: 1px solid #ddd; padding-top: 15px; text-align: center; color: #666; font-size: 12px;">
+            <p>&copy; 2026 Lak Chogo Welfare Group</p>
+            <p>"We are together in times of sorrow."</p>
+        </div>
+    </div>
+</body>
+</html>

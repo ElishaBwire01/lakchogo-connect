@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Welcome to LakChogo Connect</title>
+</head>
+<body style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background: #f4f4f4;">
+    <div style="background: white; padding: 30px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+        <div style="text-align: center; border-bottom: 3px solid #0d6efd; padding-bottom: 20px;">
+            <h1 style="color: #0d6efd; margin: 0;">LakChogo Connect</h1>
+            <p style="color: #666; margin: 5px 0 0;">Welfare Group Management System</p>
+        </div>
+        <div style="padding: 20px 0;">
+            <h2>Welcome, {{ user.get_full_name }}!</h2>
+            <p>We're excited to have you on board! Your account has been successfully created.</p>
+            <p><strong>Username:</strong> {{ user.username }}</p>
+            <p><strong>Member ID:</strong> {{ member.member_id }}</p>
+            <p><strong>Phone:</strong> {{ user.phone }}</p>
+            <div style="background: #f8f9fa; padding: 15px; border-radius: 5px; margin: 20px 0;">
+                <h4 style="margin-top: 0;">What's Next?</h4>
+                <ul>
+                    <li>Complete your profile</li>
+                    <li>Explore the dashboard</li>
+                    <li>Join upcoming meetings</li>
+                    <li>Make your first payment</li>
+                </ul>
+            </div>
+            <p style="text-align: center;">
+                <a href="{{ login_url }}" style="background: #0d6efd; color: white; padding: 12px 30px; text-decoration: none; border-radius: 5px; display: inline-block;">
+                    Login Now
+                </a>
+            </p>
+        </div>
+        <div style="border-top: 1px solid #ddd; padding-top: 15px; text-align: center; color: #666; font-size: 12px;">
+            <p>&copy; 2026 Lak Chogo Welfare Group. All rights reserved.</p>
+            <p>Need help? Contact support@lakchogo.com</p>
+        </div>
+    </div>
+</body>
+</html>

@@ -15,7 +15,6 @@ django.setup()
 
 from django.contrib.auth import get_user_model
 from django.core.management import call_command
-from django.db import connection
 from accounts.models import Role
 from members.models import Member
 from finance.models import PaymentCategory
