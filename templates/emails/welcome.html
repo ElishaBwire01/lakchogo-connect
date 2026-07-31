@@ -2,38 +2,112 @@
 <html>
 <head>
     <meta charset="UTF-8">
-    <title>Welcome to LakChogo Connect</title>
+    <title>Welcome to LakChogo Connect!</title>
 </head>
-<body style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background: #f4f4f4;">
-    <div style="background: white; padding: 30px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
-        <div style="text-align: center; border-bottom: 3px solid #0d6efd; padding-bottom: 20px;">
-            <h1 style="color: #0d6efd; margin: 0;">LakChogo Connect</h1>
-            <p style="color: #666; margin: 5px 0 0;">Welfare Group Management System</p>
+<body style="font-family: 'Segoe UI', Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background: #f4f6f9;">
+    <div style="background: white; padding: 40px; border-radius: 15px; box-shadow: 0 4px 20px rgba(0,0,0,0.08);">
+        <!-- Header -->
+        <div style="text-align: center; border-bottom: 4px solid #0d6efd; padding-bottom: 25px;">
+            <h1 style="color: #0d6efd; margin: 0; font-size: 32px;">🏠 LakChogo Connect</h1>
+            <p style="color: #6c757d; margin: 5px 0 0; font-size: 16px;">Welfare Group Management System</p>
         </div>
-        <div style="padding: 20px 0;">
-            <h2>Welcome, {{ user.get_full_name }}!</h2>
-            <p>We're excited to have you on board! Your account has been successfully created.</p>
-            <p><strong>Username:</strong> {{ user.username }}</p>
-            <p><strong>Member ID:</strong> {{ member.member_id }}</p>
-            <p><strong>Phone:</strong> {{ user.phone }}</p>
-            <div style="background: #f8f9fa; padding: 15px; border-radius: 5px; margin: 20px 0;">
-                <h4 style="margin-top: 0;">What's Next?</h4>
-                <ul>
-                    <li>Complete your profile</li>
-                    <li>Explore the dashboard</li>
-                    <li>Join upcoming meetings</li>
-                    <li>Make your first payment</li>
-                </ul>
-            </div>
-            <p style="text-align: center;">
-                <a href="{{ login_url }}" style="background: #0d6efd; color: white; padding: 12px 30px; text-decoration: none; border-radius: 5px; display: inline-block;">
-                    Login Now
-                </a>
+        
+        <!-- Welcome Message -->
+        <div style="padding: 30px 0;">
+            <h2 style="color: #2d3436; font-size: 24px;">Hello {{ user.get_full_name }}! 👋</h2>
+            <p style="color: #555; line-height: 1.8; font-size: 15px;">
+                <strong>Welcome to LakChogo Connect!</strong> We are thrilled to have you on board. 
+                Your account has been successfully created and you are now part of our growing welfare community.
             </p>
+            
+            <div style="background: #e7f3ff; padding: 20px; border-radius: 10px; border-left: 4px solid #0d6efd; margin: 25px 0;">
+                <p style="margin: 0; color: #0d6efd; font-weight: bold;">📋 Your Account Details</p>
+                <hr style="border: none; border-top: 1px solid #cce5ff; margin: 10px 0;">
+                <p style="margin: 5px 0; color: #333;"><strong>Name:</strong> {{ user.get_full_name }}</p>
+                <p style="margin: 5px 0; color: #333;"><strong>Member ID:</strong> {{ member.member_id }}</p>
+                <p style="margin: 5px 0; color: #333;"><strong>Phone:</strong> {{ user.phone }}</p>
+                <p style="margin: 5px 0; color: #333;"><strong>Email:</strong> {{ user.email }}</p>
+                <p style="margin: 5px 0; color: #333;"><strong>Joined:</strong> {{ user.date_joined|date:"F d, Y" }}</p>
+            </div>
         </div>
-        <div style="border-top: 1px solid #ddd; padding-top: 15px; text-align: center; color: #666; font-size: 12px;">
-            <p>&copy; 2026 Lak Chogo Welfare Group. All rights reserved.</p>
-            <p>Need help? Contact support@lakchogo.com</p>
+        
+        <!-- What You Can Do -->
+        <div style="padding: 20px 0;">
+            <h3 style="color: #2d3436;">🚀 What You Can Do with LakChogo Connect</h3>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin: 20px 0;">
+                <div style="background: #f8f9fa; padding: 15px; border-radius: 10px; text-align: center;">
+                    <div style="font-size: 30px;">👥</div>
+                    <p style="margin: 5px 0; font-weight: bold; font-size: 14px;">View Members</p>
+                    <p style="margin: 0; font-size: 12px; color: #6c757d;">Connect with fellow members</p>
+                </div>
+                <div style="background: #f8f9fa; padding: 15px; border-radius: 10px; text-align: center;">
+                    <div style="font-size: 30px;">💰</div>
+                    <p style="margin: 5px 0; font-weight: bold; font-size: 14px;">Make Payments</p>
+                    <p style="margin: 0; font-size: 12px; color: #6c757d;">Track your contributions</p>
+                </div>
+                <div style="background: #f8f9fa; padding: 15px; border-radius: 10px; text-align: center;">
+                    <div style="font-size: 30px;">📅</div>
+                    <p style="margin: 5px 0; font-weight: bold; font-size: 14px;">Join Meetings</p>
+                    <p style="margin: 0; font-size: 12px; color: #6c757d;">Stay updated with events</p>
+                </div>
+                <div style="background: #f8f9fa; padding: 15px; border-radius: 10px; text-align: center;">
+                    <div style="font-size: 30px;">💬</div>
+                    <p style="margin: 5px 0; font-weight: bold; font-size: 14px;">Chat with Members</p>
+                    <p style="margin: 0; font-size: 12px; color: #6c757d;">Stay connected anytime</p>
+                </div>
+                <div style="background: #f8f9fa; padding: 15px; border-radius: 10px; text-align: center;">
+                    <div style="font-size: 30px;">📊</div>
+                    <p style="margin: 5px 0; font-weight: bold; font-size: 14px;">View Reports</p>
+                    <p style="margin: 0; font-size: 12px; color: #6c757d;">Track group progress</p>
+                </div>
+                <div style="background: #f8f9fa; padding: 15px; border-radius: 10px; text-align: center;">
+                    <div style="font-size: 30px;">❤️</div>
+                    <p style="margin: 5px 0; font-weight: bold; font-size: 14px;">Welfare Support</p>
+                    <p style="margin: 0; font-size: 12px; color: #6c757d;">Community care and support</p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- How It Works -->
+        <div style="background: #f8f9fa; padding: 20px; border-radius: 10px; margin: 20px 0;">
+            <h4 style="color: #2d3436; margin-top: 0;">📖 How LakChogo Connect Works</h4>
+            <ol style="color: #555; line-height: 2; font-size: 14px; padding-left: 20px;">
+                <li><strong>Login</strong> to your account using your username and password</li>
+                <li><strong>Complete</strong> your profile with accurate information</li>
+                <li><strong>Make payments</strong> for contributions and subscriptions</li>
+                <li><strong>Attend meetings</strong> and participate in group decisions</li>
+                <li><strong>Track</strong> your compliance and welfare eligibility</li>
+                <li><strong>Connect</strong> with other members via chat</li>
+                <li><strong>Generate reports</strong> for transparency and record keeping</li>
+            </ol>
+        </div>
+        
+        <!-- Quick Links -->
+        <div style="text-align: center; margin: 30px 0 20px;">
+            <h4 style="color: #2d3436;">🔗 Quick Links</h4>
+            <div style="display: flex; justify-content: center; gap: 15px; flex-wrap: wrap;">
+                <a href="{{ login_url }}" style="background: #0d6efd; color: white; padding: 12px 30px; text-decoration: none; border-radius: 8px; display: inline-block; font-weight: bold;">
+                    🚀 Login to Dashboard
+                </a>
+                <a href="{{ login_url }}profile/" style="background: #28a745; color: white; padding: 12px 30px; text-decoration: none; border-radius: 8px; display: inline-block; font-weight: bold;">
+                    👤 Complete Profile
+                </a>
+            </div>
+        </div>
+        
+        <!-- Support -->
+        <div style="border-top: 1px solid #e9ecef; padding-top: 20px; margin-top: 20px; text-align: center;">
+            <p style="color: #6c757d; font-size: 13px; line-height: 1.6; margin: 0;">
+                📧 <strong>Need help?</strong> Contact our support team at 
+                <a href="mailto:support@lakchogo.com" style="color: #0d6efd; text-decoration: none;">support@lakchogo.com</a>
+                <br>
+                📱 Call us at +254 712 345 678
+            </p>
+            <p style="color: #999; font-size: 12px; margin: 15px 0 0;">
+                &copy; {{ year }} Lak Chogo Welfare Group. All rights reserved.
+                <br>
+                <span style="font-size: 11px;">This is an automated email. Please do not reply.</span>
+            </p>
         </div>
     </div>
 </body>

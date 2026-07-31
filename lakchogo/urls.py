@@ -20,6 +20,8 @@ urlpatterns = [
     path('reports/', include('reports.urls')),
     path('communications/', include('communications.urls')),
     path('api/', include('api.urls')),
+    # Google OAuth URLs
+    path('accounts/', include('allauth.urls')),
 ]
 
 if settings.DEBUG:

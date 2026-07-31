@@ -1,0 +1,160 @@
+{% extends "base.html" %}
+{% load socialaccount %}
+{% load crispy_forms_tags %}
+
+{% block title %}Connect Google Account{% endblock %}
+
+{% block content %}
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+
+<style>
+body{
+    background:linear-gradient(135deg,#0f172a,#1e293b,#2563eb);
+    min-height:100vh;
+}
+
+.connect-card{
+    max-width:560px;
+    margin:auto;
+    margin-top:70px;
+    border:none;
+    border-radius:22px;
+    overflow:hidden;
+    box-shadow:0 20px 50px rgba(0,0,0,.35);
+    animation:fadeIn .8s;
+}
+
+.header{
+    background:linear-gradient(90deg,#2563eb,#06b6d4);
+    color:white;
+    padding:35px;
+    text-align:center;
+}
+
+.google{
+    width:70px;
+    height:70px;
+    background:white;
+    border-radius:50%;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    margin:auto;
+    font-size:32px;
+    box-shadow:0 5px 20px rgba(0,0,0,.25);
+}
+
+.form-area{
+    background:white;
+    padding:40px;
+}
+
+.btn-google{
+    width:100%;
+    padding:14px;
+    border-radius:12px;
+    font-size:18px;
+    font-weight:600;
+    background:#2563eb;
+    border:none;
+}
+
+.btn-google:hover{
+    background:#1d4ed8;
+}
+
+.info-box{
+    background:#eef6ff;
+    border-left:5px solid #2563eb;
+    border-radius:10px;
+    padding:15px;
+    margin-bottom:25px;
+}
+
+input{
+    border-radius:10px !important;
+}
+
+@keyframes fadeIn{
+from{opacity:0;transform:translateY(30px);}
+to{opacity:1;transform:translateY(0);}
+}
+</style>
+
+<div class="container">
+
+<div class="card connect-card">
+
+<div class="header">
+
+<div class="google">
+🔐
+</div>
+
+<h2 class="mt-3">
+Connect your Google Account
+</h2>
+
+<p class="mb-0">
+Continue to LakChogo Connect securely using Google.
+</p>
+
+</div>
+
+<div class="form-area">
+
+<div class="info-box">
+
+<strong>Google Account</strong><br>
+
+{{ account.extra_data.email }}
+
+</div>
+
+{% if form.non_field_errors %}
+
+<div class="alert alert-danger">
+
+{{ form.non_field_errors }}
+
+</div>
+
+{% endif %}
+
+<form method="post">
+
+{% csrf_token %}
+
+{{ form|crispy }}
+
+<button class="btn btn-primary btn-google mt-4">
+
+Complete Sign Up
+
+</button>
+
+</form>
+
+<hr>
+
+<div class="text-center text-muted">
+
+Already have an account?
+
+<br>
+
+<a href="{% url 'account_login' %}">
+
+Sign in instead
+
+</a>
+
+</div>
+
+</div>
+
+</div>
+
+</div>
+
+{% endblock %}

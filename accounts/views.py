@@ -600,3 +600,19 @@ def check_username(request):
 def dashboard(request):
     """User dashboard redirect"""
     return redirect('dashboard:index')
+
+def google_login(request):
+    """Redirect to Google OAuth login"""
+    from django.shortcuts import redirect
+    from allauth.socialaccount.providers.google.views import GoogleOAuth2Adapter
+    from allauth.socialaccount.providers.oauth2.client import OAuth2Client
+    from allauth.socialaccount.models import SocialApp
+    from django.contrib.sites.models import Site
+    
+    # Redirect to Google OAuth
+    return redirect('/accounts/google/login/')
+
+def google_login(request):
+    """Redirect to Google OAuth login"""
+    from django.shortcuts import redirect
+    return redirect('/accounts/google/login/')

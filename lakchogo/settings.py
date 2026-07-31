@@ -30,6 +30,13 @@ INSTALLED_APPS = [
     'crispy_bootstrap5',
     'django_extensions',
     
+    # Django Allauth for Google Login
+    'django.contrib.sites',
+    'allauth',
+    'allauth.account',
+    'allauth.socialaccount',
+    'allauth.socialaccount.providers.google',
+    
     # Local apps
     'accounts',
     'members',
@@ -43,6 +50,8 @@ INSTALLED_APPS = [
     'api',
 ]
 
+SITE_ID = 1
+
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'corsheaders.middleware.CorsMiddleware',
@@ -52,6 +61,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'allauth.account.middleware.AccountMiddleware',  # Add this line!
 ]
 
 ROOT_URLCONF = 'lakchogo.urls'
@@ -147,17 +157,28 @@ CORS_ALLOWED_ORIGINS = [
 
 AUTH_USER_MODEL = 'accounts.User'
 
+# Authentication Backends for Google Login
 AUTHENTICATION_BACKENDS = [
-    'accounts.backends.PhoneOrUsernameBackend',
     'django.contrib.auth.backends.ModelBackend',
+    'accounts.backends.PhoneOrUsernameBackend',
+    'allauth.account.auth_backends.AuthenticationBackend',
 ]
 
 LOGIN_URL = 'accounts:login'
 LOGIN_REDIRECT_URL = 'dashboard:index'
 LOGOUT_REDIRECT_URL = 'accounts:login'
 
+# Allauth Settings
+ACCOUNT_EMAIL_REQUIRED = True
+ACCOUNT_EMAIL_VERIFICATION = 'optional'
+ACCOUNT_LOGIN_ATTEMPTS_LIMIT = 5
+ACCOUNT_LOGIN_ATTEMPTS_TIMEOUT = 300
+ACCOUNT_LOGOUT_ON_GET = True
+ACCOUNT_SESSION_REMEMBER = True
+SOCIALACCOUNT_LOGIN_ON_GET = True
+
 # ============================================
-# EMAIL CONFIGURATION - GMAIL SMTP WITH APP PASSWORD
+# EMAIL CONFIGURATION - GMAIL SMTP
 # ============================================
 
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
@@ -168,6 +189,22 @@ EMAIL_HOST_USER = config('EMAIL_HOST_USER', default='elishabwire563@gmail.com')
 EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD', default='')
 DEFAULT_FROM_EMAIL = config('DEFAULT_FROM_EMAIL', default='elishabwire563@gmail.com')
 EMAIL_USE_SSL = False
+
+# ============================================
+# GOOGLE OAUTH 2.0 - FREE AUTHENTICATION
+# ============================================
+
+SOCIALACCOUNT_PROVIDERS = {
+    "google": {
+        "SCOPE": [
+            "profile",
+            "email",
+        ],
+        "AUTH_PARAMS": {
+            "access_type": "online",
+        },
+    }
+}
 
 # ============================================
 
