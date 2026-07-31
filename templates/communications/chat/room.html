@@ -1,12 +1,237 @@
 {% extends 'base_dashboard.html' %}
 
-{% block title %}Chat Room - LakChogo Connect{% endblock %}
+{% block title %}{{ room.name }} - LakChogo Connect{% endblock %}
+
+{% block extra_css %}
+<style>
+    .chat-container {
+        height: 450px;
+        overflow-y: auto;
+        background: #f8f9fa;
+        padding: 15px;
+        border-radius: 8px;
+    }
+    .message-bubble {
+        max-width: 70%;
+        padding: 10px 15px;
+        border-radius: 18px;
+        margin-bottom: 8px;
+        word-wrap: break-word;
+    }
+    .message-sent {
+        background: #0d6efd;
+        color: white;
+        margin-left: auto;
+        border-bottom-right-radius: 4px;
+    }
+    .message-received {
+        background: white;
+        color: #333;
+        margin-right: auto;
+        border-bottom-left-radius: 4px;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+    .message-system {
+        background: #e9ecef;
+        color: #6c757d;
+        text-align: center;
+        margin: 10px auto;
+        font-style: italic;
+        font-size: 0.9em;
+        border-radius: 20px;
+        padding: 5px 15px;
+        max-width: 80%;
+    }
+    .message-time {
+        font-size: 0.7em;
+        opacity: 0.7;
+        margin-top: 3px;
+    }
+    .chat-input-area {
+        border-top: 1px solid #dee2e6;
+        padding-top: 15px;
+    }
+</style>
+{% endblock %}
 
 {% block dashboard_content %}
 <div class="row">
     <div class="col-12">
-        <h1 class="h3">Chat Room</h1>
-        <p class="text-muted">Chat room coming soon.</p>
+        <div class="d-flex justify-content-between align-items-center">
+            <div>
+                <h1 class="h3">
+                    {% if room.room_type == 'direct' %}
+                        <i class="fas fa-user text-primary"></i>
+                    {% elif room.room_type == 'committee' %}
+                        <i class="fas fa-users-cog text-warning"></i>
+                    {% else %}
+                        <i class="fas fa-users text-success"></i>
+                    {% endif %}
+                    {{ room.name }}
+                </h1>
+                <p class="text-muted">
+                    {{ members|length }} members
+                    {% for member in members %}
+                        {% if member != user %}
+                            <span class="badge bg-secondary">{{ member.get_full_name }}</span>
+                        {% endif %}
+                    {% endfor %}
+                </p>
+            </div>
+            <div>
+                <a href="{% url 'communications:chat_dashboard' %}" class="btn btn-secondary">
+                    <i class="fas fa-arrow-left"></i> Back
+                </a>
+            </div>
+        </div>
     </div>
 </div>
+
+<div class="row mt-3">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-body">
+                <!-- Messages -->
+                <div class="chat-container" id="chat-messages">
+                    {% for message in messages %}
+                        <div class="d-flex" data-msg-id="{{ message.id }}">
+                            <div class="message-bubble 
+                                {% if message.message_type == 'system' %}
+                                    message-system
+                                {% elif message.sender == user %}
+                                    message-sent
+                                {% else %}
+                                    message-received
+                                {% endif %}
+                            ">
+                                {% if message.sender != user and message.message_type != 'system' %}
+                                    <strong>{{ message.sender.get_full_name }}</strong><br>
+                                {% endif %}
+                                {{ message.content|linebreaks }}
+                                <div class="message-time">
+                                    {{ message.created_at|date:"M d, Y H:i" }}
+                                    {% if message.sender == user %}
+                                        <i class="fas fa-check" style="font-size: 0.7em;"></i>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    {% empty %}
+                        <div class="text-center text-muted py-5">
+                            <i class="fas fa-comment fa-4x mb-3"></i>
+                            <h5>No messages yet</h5>
+                            <p>Start the conversation!</p>
+                        </div>
+                    {% endfor %}
+                </div>
+
+                <!-- Message Input -->
+                <div class="chat-input-area">
+                    <form id="chat-form" method="post" action="{% url 'communications:send_message' room.id %}">
+                        {% csrf_token %}
+                        <div class="input-group">
+                            <input type="text" class="form-control" id="message-input" name="content" placeholder="Type a message..." required>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-paper-plane"></i> Send
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Auto-scroll to bottom
+const chatContainer = document.getElementById('chat-messages');
+if (chatContainer) {
+    chatContainer.scrollTop = chatContainer.scrollHeight;
+}
+
+// Send message via AJAX - prevents page reload
+document.getElementById('chat-form').addEventListener('submit', function(e) {
+    e.preventDefault();
+    const form = this;
+    const input = document.getElementById('message-input');
+    const content = input.value.trim();
+    
+    if (!content) return;
+    
+    const formData = new FormData(form);
+    
+    // Show sending indicator
+    const sendBtn = form.querySelector('button[type="submit"]');
+    sendBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Sending...';
+    sendBtn.disabled = true;
+    
+    fetch(form.action, {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.status === 'success') {
+            // Append message
+            const msgDiv = document.createElement('div');
+            msgDiv.className = 'd-flex';
+            msgDiv.innerHTML = `
+                <div class="message-bubble message-sent">
+                    ${data.message.content}
+                    <div class="message-time">
+                        ${data.message.created_at}
+                        <i class="fas fa-check" style="font-size: 0.7em;"></i>
+                    </div>
+                </div>
+            `;
+            chatContainer.appendChild(msgDiv);
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+            input.value = '';
+        }
+    })
+    .catch(error => console.error('Error:', error))
+    .finally(() => {
+        sendBtn.innerHTML = '<i class="fas fa-paper-plane"></i> Send';
+        sendBtn.disabled = false;
+    });
+});
+
+// Enter key to submit
+document.getElementById('message-input').addEventListener('keypress', function(e) {
+    if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        document.getElementById('chat-form').dispatchEvent(new Event('submit'));
+    }
+});
+
+// Simple refresh - only check for new messages every 15 seconds
+// This reduces database load
+let lastMessageId = null;
+
+function checkNewMessages() {
+    // Get the last message ID
+    const messages = document.querySelectorAll('.message-bubble');
+    if (messages.length > 0) {
+        const lastMsg = messages[messages.length - 1];
+        // Check if we need to reload
+        // Simple approach: reload page if new messages might exist
+        // This is less efficient but works for development
+        // For production, use WebSockets
+    }
+}
+
+// Refresh page every 30 seconds to check for new messages
+// Reduced from 10 seconds to 30 seconds to reduce load
+setInterval(function() {
+    // Only refresh if the page is visible
+    if (!document.hidden) {
+        location.reload();
+    }
+}, 30000);
+
+// Manual refresh button
+function refreshChat() {
+    location.reload();
+}
+</script>
 {% endblock %}

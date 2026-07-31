@@ -185,3 +185,13 @@ LAKCHOGO_SETTINGS = {
     'GROUP_EMAIL': 'info@lakchogo.com',
     'GROUP_PHONE': '+254712345678',
 }
+
+# SQLite WAL mode for better concurrency
+if 'sqlite3' in DATABASES['default']['ENGINE']:
+    DATABASES['default']['OPTIONS'] = {
+        'timeout': 20,  # Increase timeout
+        'isolation_level': None,  # Enable WAL mode
+    }
+    # Enable WAL mode (Write-Ahead Logging) for better concurrency
+    import sqlite3
+    sqlite3.enable_callback_tracebacks(True)

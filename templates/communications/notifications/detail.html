@@ -1,12 +1,122 @@
 {% extends 'base_dashboard.html' %}
 
-{% block title %}Notification Detail - LakChogo Connect{% endblock %}
+{% block title %}{{ notification.title }} - LakChogo Connect{% endblock %}
 
 {% block dashboard_content %}
 <div class="row">
-    <div class="col-12">
-        <h1 class="h3">Notification Detail</h1>
-        <p class="text-muted">Notification details coming soon.</p>
+    <div class="col-md-8 mx-auto">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <div>
+                    <h4 class="mb-0">{{ notification.title }}</h4>
+                    <small class="text-muted">
+                        {{ notification.get_notification_type_display }}
+                    </small>
+                </div>
+                <span class="badge bg-{% if notification.priority == 'urgent' %}danger{% elif notification.priority == 'high' %}warning{% else %}info{% endif %}">
+                    {{ notification.get_priority_display }}
+                </span>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <small class="text-muted">
+                        Received: {{ notification.created_at|date:"F d, Y H:i" }}
+                        {% if notification.read_at %}
+                            <br>Read: {{ notification.read_at|date:"F d, Y H:i" }}
+                        {% endif %}
+                    </small>
+                </div>
+                
+                <div class="alert {% if notification.status == 'pending' or notification.status == 'sent' %}alert-info{% else %}alert-secondary{% endif %}">
+                    <strong>Status:</strong> 
+                    {% if notification.status == 'pending' or notification.status == 'sent' %}
+                        <span class="badge bg-primary">Unread</span>
+                    {% else %}
+                        <span class="badge bg-success">Read</span>
+                    {% endif %}
+                </div>
+                
+                <div class="message-content">
+                    {{ notification.message|linebreaks }}
+                </div>
+                
+                {% if notification.action_url %}
+                    <div class="mt-4">
+                        <a href="{{ notification.action_url }}" class="btn btn-primary">
+                            <i class="fas fa-arrow-right"></i> View Details
+                        </a>
+                    </div>
+                {% endif %}
+            </div>
+            <div class="card-footer">
+                <a href="{% url 'communications:notification_list' %}" class="btn btn-secondary">
+                    <i class="fas fa-arrow-left"></i> Back to Notifications
+                </a>
+                
+                {% if notification.status == 'pending' or notification.status == 'sent' %}
+                    <button onclick="markRead({{ notification.id }})" class="btn btn-success">
+                        <i class="fas fa-check"></i> Mark as Read
+                    </button>
+                {% endif %}
+                
+                <button onclick="deleteNotification({{ notification.id }})" class="btn btn-danger float-end">
+                    <i class="fas fa-trash"></i> Delete
+                </button>
+            </div>
+        </div>
     </div>
 </div>
+
+<script>
+function markRead(id) {
+    fetch(`/communications/notifications/${id}/read/`, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': getCsrfToken(),
+            'Content-Type': 'application/json'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.status === 'success') {
+            location.reload();
+        }
+    })
+    .catch(error => console.error('Error:', error));
+}
+
+function deleteNotification(id) {
+    if (!confirm('Are you sure you want to delete this notification?')) return;
+    
+    fetch(`/communications/notifications/${id}/delete/`, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': getCsrfToken(),
+            'Content-Type': 'application/json'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.status === 'success') {
+            window.location.href = "{% url 'communications:notification_list' %}";
+        }
+    })
+    .catch(error => console.error('Error:', error));
+}
+
+function getCsrfToken() {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, 10) === 'csrftoken=') {
+                cookieValue = decodeURIComponent(cookie.substring(10));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+</script>
 {% endblock %}

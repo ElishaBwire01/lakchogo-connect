@@ -5,16 +5,26 @@
 {% block dashboard_content %}
 <div class="row">
     <div class="col-12">
-        <h1 class="h3">Payment Receipt</h1>
+        <div class="d-flex justify-content-between align-items-center">
+            <h1 class="h3">Payment Receipt</h1>
+            <div>
+                <button onclick="window.print()" class="btn btn-primary">
+                    <i class="fas fa-print"></i> Print
+                </button>
+                <a href="{% url 'finance:payment_detail' payment.id %}" class="btn btn-secondary">
+                    <i class="fas fa-arrow-left"></i> Back
+                </a>
+            </div>
+        </div>
         <p class="text-muted">Receipt #{{ receipt.receipt_number }}</p>
     </div>
 </div>
 
 <div class="row mt-4">
     <div class="col-md-8 mx-auto">
-        <div class="card">
-            <div class="card-header text-center">
-                <h4>LAK CHOGO WELFARE GROUP</h4>
+        <div class="card shadow">
+            <div class="card-header text-center bg-light">
+                <h4 class="mb-0">LAK CHOGO WELFARE GROUP</h4>
                 <p class="text-muted mb-0">Payment Receipt</p>
             </div>
             <div class="card-body">
@@ -41,9 +51,12 @@
                 <div class="row">
                     <div class="col-12">
                         <p><strong>Payment For:</strong> {{ payment.category.name }}</p>
-                        <p><strong>Amount:</strong> <span class="h4">KES {{ payment.amount|floatformat:0 }}</span></p>
+                        <p><strong>Amount:</strong> <span class="h4 text-success">KES {{ payment.amount|floatformat:0 }}</span></p>
                         <p><strong>Method:</strong> {{ payment.get_payment_method_display }}</p>
                         <p><strong>Transaction Ref:</strong> {{ payment.transaction_ref|default:"N/A" }}</p>
+                        {% if payment.notes %}
+                        <p><strong>Notes:</strong> {{ payment.notes }}</p>
+                        {% endif %}
                     </div>
                 </div>
                 <hr>
@@ -63,4 +76,20 @@
         </div>
     </div>
 </div>
+
+<style>
+    @media print {
+        .sidebar, .navbar, .btn, .card-footer {
+            display: none !important;
+        }
+        .card {
+            border: none !important;
+            box-shadow: none !important;
+        }
+        .container-fluid {
+            margin: 0 !important;
+            padding: 0 !important;
+        }
+    }
+</style>
 {% endblock %}

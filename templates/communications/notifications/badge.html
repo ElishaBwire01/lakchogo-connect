@@ -1,0 +1,34 @@
+{% if unread_count > 0 %}
+    <span class="badge bg-danger rounded-pill notification-badge" id="notification-badge-id">{{ unread_count }}</span>
+{% else %}
+    <span class="badge bg-danger rounded-pill notification-badge" id="notification-badge-id" style="display:none;">0</span>
+{% endif %}
+
+<script>
+// Only update every 60 seconds to reduce database load
+function updateNotificationBadge() {
+    fetch('{% url "communications:unread_count_json" %}')
+        .then(response => response.json())
+        .then(data => {
+            const badge = document.getElementById('notification-badge-id');
+            if (data && data.unread_count !== undefined) {
+                if (data.unread_count > 0) {
+                    badge.textContent = data.unread_count;
+                    badge.style.display = 'inline';
+                } else {
+                    badge.style.display = 'none';
+                }
+            }
+        })
+        .catch(error => {
+            // Silent fail
+        });
+}
+
+// Update every 60 seconds instead of 30
+setInterval(updateNotificationBadge, 60000);
+// Update on page load after 2 seconds
+document.addEventListener('DOMContentLoaded', function() {
+    setTimeout(updateNotificationBadge, 2000);
+});
+</script>

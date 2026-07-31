@@ -50,6 +50,7 @@
                     <li class="nav-item">
                         <a class="nav-link" href="{% url 'communications:notification_list' %}">
                             <i class="fas fa-bell"></i> Notifications
+                            {% include 'communications/notifications/badge.html' %}
                         </a>
                     </li>
                     <li class="nav-item">
@@ -130,6 +131,11 @@
     .stat-card i {
         font-size: 2.5rem;
         opacity: 0.5;
+    }
+    .notification-badge {
+        font-size: 0.6rem;
+        margin-left: 5px;
+        vertical-align: top;
     }
 </style>
 {% endblock %}

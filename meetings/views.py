@@ -7,16 +7,9 @@ from django.http import JsonResponse, HttpResponse
 from django.db.models import Q
 from .models import Meeting, Attendance, MeetingMinutes
 from members.models import Member
+from datetime import datetime
 import json
 import hashlib
-
-# Try to import qrcode, fallback if not installed
-try:
-    import qrcode
-    from io import BytesIO
-    QRCODE_AVAILABLE = True
-except ImportError:
-    QRCODE_AVAILABLE = False
 
 @login_required
 def index(request):
@@ -54,18 +47,27 @@ def schedule(request):
     if request.method == 'POST':
         title = request.POST.get('title')
         description = request.POST.get('description')
-        date = request.POST.get('date')
+        date_str = request.POST.get('date')
         venue = request.POST.get('venue')
         agenda = request.POST.get('agenda')
         
-        if not all([title, date, venue]):
+        if not all([title, date_str, venue]):
             messages.error(request, 'Title, Date, and Venue are required.')
+            return render(request, 'meetings/schedule.html', {'title': 'Schedule Meeting'})
+        
+        # Convert string to datetime
+        try:
+            meeting_date = datetime.strptime(date_str, '%Y-%m-%dT%H:%M')
+            # Make it timezone aware
+            meeting_date = timezone.make_aware(meeting_date)
+        except ValueError:
+            messages.error(request, 'Invalid date format.')
             return render(request, 'meetings/schedule.html', {'title': 'Schedule Meeting'})
         
         meeting = Meeting.objects.create(
             title=title,
             description=description,
-            date=date,
+            date=meeting_date,
             venue=venue,
             agenda=agenda,
             created_by=request.user,
@@ -191,7 +193,13 @@ def edit_meeting(request, meeting_id):
     if request.method == 'POST':
         meeting.title = request.POST.get('title')
         meeting.description = request.POST.get('description')
-        meeting.date = request.POST.get('date')
+        date_str = request.POST.get('date')
+        if date_str:
+            try:
+                meeting_date = datetime.strptime(date_str, '%Y-%m-%dT%H:%M')
+                meeting.date = timezone.make_aware(meeting_date)
+            except ValueError:
+                pass
         meeting.venue = request.POST.get('venue')
         meeting.agenda = request.POST.get('agenda')
         meeting.status = request.POST.get('status')
@@ -226,7 +234,7 @@ def delete_meeting(request, meeting_id):
 
 @login_required
 def generate_qr(request, meeting_id):
-    """Generate QR code data for a meeting (JSON response)"""
+    """Generate QR code data for a meeting (JSON response for API)"""
     meeting = get_object_or_404(Meeting, id=meeting_id)
     
     data = {
@@ -249,20 +257,28 @@ def generate_qr(request, meeting_id):
 
 
 @login_required
-def generate_qr_image(request, meeting_id):
-    """Generate QR code image for a meeting"""
+def qr_code_display(request, meeting_id):
+    """Display QR code for a meeting - HTML page"""
     meeting = get_object_or_404(Meeting, id=meeting_id)
     
-    if not QRCODE_AVAILABLE:
-        # Fallback - create a simple text QR
-        from django.http import HttpResponse
-        data = json.dumps({
-            'meeting_id': meeting.id,
-            'title': meeting.title,
-            'date': meeting.date.isoformat(),
-            'venue': meeting.venue,
-        })
-        return HttpResponse(f"QR Code Data: {data}", content_type="text/plain")
+    context = {
+        'meeting': meeting,
+        'qr_image_url': f"/meetings/{meeting.id}/qr-image/",
+        'qr_data_url': f"/meetings/{meeting.id}/qr-data/",
+        'title': f'QR Code - {meeting.title}',
+    }
+    return render(request, 'meetings/qr_code.html', context)
+
+
+@login_required
+def generate_qr_image(request, meeting_id):
+    """Generate QR code image for a meeting (PNG)"""
+    import qrcode
+    import json
+    from io import BytesIO
+    from django.http import HttpResponse
+    
+    meeting = get_object_or_404(Meeting, id=meeting_id)
     
     data = json.dumps({
         'meeting_id': meeting.id,
@@ -285,20 +301,6 @@ def generate_qr_image(request, meeting_id):
     response = HttpResponse(content_type="image/png")
     img.save(response, "PNG")
     return response
-
-
-@login_required
-def qr_code_display(request, meeting_id):
-    """Display QR code for a meeting"""
-    meeting = get_object_or_404(Meeting, id=meeting_id)
-    
-    context = {
-        'meeting': meeting,
-        'qr_code_url': f"/meetings/{meeting.id}/qr-image/",
-        'title': f'QR Code - {meeting.title}',
-        'qrcode_available': QRCODE_AVAILABLE,
-    }
-    return render(request, 'meetings/qr_code.html', context)
 
 
 @login_required
@@ -358,83 +360,9 @@ def get_attendance_summary(request, meeting_id):
     return JsonResponse(data)
 
 @login_required
-def qr_code_display(request, meeting_id):
-    """Display QR code for a meeting - HTML page"""
-    meeting = get_object_or_404(Meeting, id=meeting_id)
-    
-    context = {
-        'meeting': meeting,
-        'qr_image_url': f"/meetings/{meeting.id}/qr-image/",
-        'qr_data_url': f"/meetings/{meeting.id}/qr-data/",
-        'title': f'QR Code - {meeting.title}',
-        'qrcode_available': QRCODE_AVAILABLE,
-    }
-    return render(request, 'meetings/qr_code.html', context)
-
-@login_required
-def generate_qr(request, meeting_id):
-    """Generate QR code data for a meeting (JSON response for API)"""
-    meeting = get_object_or_404(Meeting, id=meeting_id)
-    
-    data = {
-        'meeting_id': meeting.id,
-        'title': meeting.title,
-        'date': meeting.date.isoformat(),
-        'venue': meeting.venue,
-    }
-    qr_data = json.dumps(data)
-    qr_hash = hashlib.md5(qr_data.encode()).hexdigest()
-    
-    meeting.qr_code = qr_hash
-    meeting.save()
-    
-    return JsonResponse({
-        'qr_code': qr_hash,
-        'meeting_id': meeting.id,
-        'data': qr_data,
-    })
-
-@login_required
-def generate_qr_image(request, meeting_id):
-    """Generate QR code image for a meeting (PNG)"""
-    import qrcode
-    from io import BytesIO
-    import json
-    
-    meeting = get_object_or_404(Meeting, id=meeting_id)
-    
-    # Create QR code data
-    data = json.dumps({
-        'meeting_id': meeting.id,
-        'title': meeting.title,
-        'date': meeting.date.isoformat(),
-        'venue': meeting.venue,
-    })
-    
-    # Generate QR code
-    qr = qrcode.QRCode(
-        version=1,
-        error_correction=qrcode.constants.ERROR_CORRECT_L,
-        box_size=10,
-        border=4,
-    )
-    qr.add_data(data)
-    qr.make(fit=True)
-    
-    img = qr.make_image(fill_color="black", back_color="white")
-    
-    # Save to response
-    response = HttpResponse(content_type="image/png")
-    img.save(response, "PNG")
-    return response
-
-
-@login_required
 def generate_qr_json(request, meeting_id):
     """Generate QR code data as JSON"""
     meeting = get_object_or_404(Meeting, id=meeting_id)
-    import json
-    import hashlib
     
     data = {
         'meeting_id': meeting.id,
@@ -453,16 +381,3 @@ def generate_qr_json(request, meeting_id):
         'meeting_id': meeting.id,
         'data': qr_data,
     })
-
-
-@login_required
-def qr_code_display(request, meeting_id):
-    """Display QR code page"""
-    meeting = get_object_or_404(Meeting, id=meeting_id)
-    
-    context = {
-        'meeting': meeting,
-        'qr_image_url': f"/meetings/{meeting.id}/qr-image/",
-        'title': f'QR Code - {meeting.title}',
-    }
-    return render(request, 'meetings/qr_code.html', context)

@@ -1,42 +1,30 @@
-from django.db.models.signals import post_save, post_delete
+from django.db.models.signals import post_save
 from django.dispatch import receiver
 from .models import ComplianceScore
-from members.models import Member
-from finance.models import Payment
-from meetings.models import Attendance
+from communications.services import NotificationTriggers
 
-@receiver(post_save, sender=Member)
-def create_compliance_score(sender, instance, created, **kwargs):
-    """Create compliance score when a new member is created"""
-    if created:
-        ComplianceScore.objects.get_or_create(
-            member=instance,
+@receiver(post_save, sender=ComplianceScore)
+def compliance_score_saved(sender, instance, created, **kwargs):
+    """Handle compliance score save and trigger notifications"""
+    # Check if status changed
+    if not created and hasattr(instance, '_status_before'):
+        if instance._status_before != instance.status:
+            NotificationTriggers.compliance_updated(instance)
+
+@receiver(post_save, sender=ComplianceScore)
+def create_alert_on_red(sender, instance, created, **kwargs):
+    """Create alert when compliance is red"""
+    if instance.status == 'red':
+        from .models import ComplianceAlert
+        alert, created = ComplianceAlert.objects.get_or_create(
+            member=instance.member,
+            is_resolved=False,
             defaults={
-                'status': 'green',
-                'score': 100.00,
-                'payment_compliance': 100.00,
-                'attendance_compliance': 100.00
+                'alert_type': 'compliance_low',
+                'priority': 'high',
+                'message': f'Compliance score is {instance.score}%. Action required.'
             }
         )
-
-@receiver(post_save, sender=Payment)
-def update_compliance_on_payment(sender, instance, created, **kwargs):
-    """Update compliance when a payment is recorded"""
-    if created and instance.status == 'completed':
-        from .services import ComplianceService
-        try:
-            ComplianceService.check_member(instance.member)
-        except Exception as e:
-            # Log error but don't break the flow
-            print(f"Error updating compliance for {instance.member}: {e}")
-
-@receiver(post_save, sender=Attendance)
-def update_compliance_on_attendance(sender, instance, created, **kwargs):
-    """Update compliance when attendance is recorded"""
-    if created or instance.status == 'present':
-        from .services import ComplianceService
-        try:
-            ComplianceService.check_member(instance.member)
-        except Exception as e:
-            # Log error but don't break the flow
-            print(f"Error updating compliance for {instance.member}: {e}")
+        if not created:
+            alert.message = f'Compliance score is {instance.score}%. Action required.'
+            alert.save()

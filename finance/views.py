@@ -371,3 +371,44 @@ def get_category_stats_json(request):
         })
     
     return JsonResponse({'categories': stats})
+
+@login_required
+def receipt_view(request, payment_id):
+    """View payment receipt"""
+    payment = get_object_or_404(Payment, id=payment_id)
+    try:
+        receipt = PaymentReceipt.objects.get(payment=payment)
+    except PaymentReceipt.DoesNotExist:
+        # Generate receipt if not exists
+        from finance.services import FinanceService
+        receipt = FinanceService.generate_receipt(payment)
+    
+    context = {
+        'title': f'Receipt #{receipt.receipt_number}',
+        'receipt': receipt,
+        'payment': payment,
+    }
+    return render(request, 'finance/receipts/view.html', context)
+
+@login_required
+def receipt_download(request, payment_id):
+    """Download payment receipt"""
+    payment = get_object_or_404(Payment, id=payment_id)
+    try:
+        receipt = PaymentReceipt.objects.get(payment=payment)
+    except PaymentReceipt.DoesNotExist:
+        from finance.services import FinanceService
+        receipt = FinanceService.generate_receipt(payment)
+    
+    if receipt.pdf_file:
+        response = HttpResponse(content_type='application/pdf')
+        response['Content-Disposition'] = f'attachment; filename="receipt_{receipt.receipt_number}.pdf"'
+        response.write(receipt.pdf_file.read())
+        return response
+    
+    # If no PDF, generate HTML receipt
+    context = {
+        'receipt': receipt,
+        'payment': payment,
+    }
+    return render(request, 'finance/receipts/download.html', context)

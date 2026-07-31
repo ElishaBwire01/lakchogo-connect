@@ -1,38 +1,36 @@
-from django.db.models.signals import post_save, pre_save
+from django.db.models.signals import post_save
 from django.dispatch import receiver
 from .models import Member, MemberContributionSummary
-from django.contrib.auth import get_user_model
-
-User = get_user_model()
-
-@receiver(post_save, sender=User)
-def create_member_from_user(sender, instance, created, **kwargs):
-    """Create member when a user is created (if applicable)"""
-    if created and not hasattr(instance, 'member'):
-        # Check if user should be a member
-        pass
+from communications.services import NotificationTriggers
+from compliance.models import ComplianceScore
 
 @receiver(post_save, sender=Member)
-def create_contribution_summary(sender, instance, created, **kwargs):
-    """Create contribution summary when a member is created"""
+def member_saved(sender, instance, created, **kwargs):
+    """Handle member save and trigger notifications"""
     if created:
-        MemberContributionSummary.objects.create(member=instance)
+        # Member registered
+        NotificationTriggers.member_registered(instance)
         
         # Create compliance score
-        from compliance.models import ComplianceScore
-        ComplianceScore.objects.create(
+        ComplianceScore.objects.get_or_create(
             member=instance,
-            status='green',
-            score=100.00
+            defaults={
+                'status': 'green',
+                'score': 100.00
+            }
         )
 
-@receiver(post_save, sender=Member)
-def update_related_data(sender, instance, **kwargs):
-    """Update related data when member is updated"""
-    # Update compliance status if needed
-    if instance.status == 'inactive' and instance.compliance_status != 'red':
-        instance.compliance_status = 'red'
-        instance.save(update_fields=['compliance_status'])
-    elif instance.status == 'active' and instance.compliance_status == 'red':
-        # This should be updated by compliance service
-        pass
+@receiver(post_save, sender=MemberContributionSummary)
+def contribution_summary_saved(sender, instance, created, **kwargs):
+    """Handle contribution summary update"""
+    # This could trigger notifications for low balance
+    if instance.balance > 1000:
+        # Send reminder if balance is high
+        from communications.services import NotificationService
+        NotificationService.send_notification(
+            user=instance.member.user,
+            notification_type='payment_reminder',
+            title='💳 Payment Reminder',
+            message=f'Your balance is KES {instance.balance}. Please make your payment.',
+            action_url=f'/finance/payments/'
+        )

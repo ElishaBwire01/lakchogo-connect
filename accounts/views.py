@@ -9,6 +9,7 @@ from django.conf import settings
 import random
 from .models import User, Role, UserRole, UserActivityLog
 from .forms import UserRegistrationForm, UserLoginForm, UserProfileForm, RoleForm
+from communications.services import NotificationTriggers
 
 User = get_user_model()
 
@@ -66,6 +67,22 @@ def register(request):
             ip_address=request.META.get('REMOTE_ADDR'),
             user_agent=request.META.get('HTTP_USER_AGENT', '')
         )
+        
+        # Create member (if not already created by signal)
+        from members.models import Member, MemberContributionSummary
+        try:
+            member = Member.objects.create(
+                user=user,
+                status='active'
+            )
+            # Create contribution summary
+            MemberContributionSummary.objects.create(member=member)
+            
+            # Send welcome notifications
+            NotificationTriggers.member_registered(member)
+            
+        except Exception as e:
+            print(f"Error creating member: {e}")
         
         messages.success(request, f'Account created successfully! Welcome {user.get_full_name()}')
         return redirect('accounts:login')
@@ -200,7 +217,6 @@ def manage_users(request):
     """User management for admins"""
     users = User.objects.all().order_by('-date_joined')
     
-    # Check if user is admin
     is_admin = request.user.is_superuser or UserRole.objects.filter(
         user=request.user,
         role__name='Admin',
@@ -283,10 +299,8 @@ def assign_role(request, user_id):
         role_id = request.POST.get('role_id')
         role = get_object_or_404(Role, id=role_id)
         
-        # Deactivate existing roles
         UserRole.objects.filter(user=user, is_active=True).update(is_active=False)
         
-        # Assign new role
         UserRole.objects.create(
             user=user,
             role=role,

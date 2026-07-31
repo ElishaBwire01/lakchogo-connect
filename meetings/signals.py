@@ -2,53 +2,48 @@ from django.db.models.signals import post_save, pre_save
 from django.dispatch import receiver
 from django.utils import timezone
 from .models import Meeting, Attendance
-from communications.models import Notification
-from members.models import Member
+from communications.services import NotificationTriggers
 
 @receiver(post_save, sender=Meeting)
 def meeting_saved(sender, instance, created, **kwargs):
-    """Handle meeting creation and updates"""
+    """Handle meeting save and trigger notifications"""
     if created:
-        # Send notification to all members
-        for member in Member.objects.filter(status='active'):
-            Notification.objects.create(
-                recipient=member.user,
-                notification_type='meeting_reminder',
-                title=f'New Meeting: {instance.title}',
-                message=f'Meeting scheduled for {instance.date.strftime("%B %d, %Y at %H:%M")} at {instance.venue}',
-                action_url=f'/meetings/{instance.id}/'
-            )
-    elif instance.status == 'cancelled':
-        # Notify members about cancellation
-        for member in Member.objects.filter(status='active'):
-            Notification.objects.create(
-                recipient=member.user,
-                notification_type='meeting_reminder',
-                title=f'Meeting Cancelled: {instance.title}',
-                message=f'The meeting scheduled for {instance.date.strftime("%B %d, %Y")} has been cancelled.',
-                action_url=f'/meetings/'
-            )
+        # Meeting created - send notifications
+        try:
+            NotificationTriggers.meeting_scheduled(instance)
+        except Exception as e:
+            print(f"Error sending meeting notifications: {e}")
+    
+    # Check if status changed to cancelled
+    if hasattr(instance, '_status_before'):
+        if instance._status_before != 'cancelled' and instance.status == 'cancelled':
+            try:
+                NotificationTriggers.meeting_cancelled(instance)
+            except Exception as e:
+                print(f"Error sending cancellation notifications: {e}")
+
+@receiver(pre_save, sender=Meeting)
+def meeting_pre_save(sender, instance, **kwargs):
+    """Store previous status before save"""
+    if instance.pk:
+        try:
+            old = Meeting.objects.get(pk=instance.pk)
+            instance._status_before = old.status
+        except Meeting.DoesNotExist:
+            pass
 
 @receiver(post_save, sender=Attendance)
 def attendance_saved(sender, instance, created, **kwargs):
-    """Handle attendance recording"""
+    """Handle attendance save and trigger notifications"""
     if created and instance.status == 'present':
-        # Update member compliance
-        from compliance.models import ComplianceScore
         try:
-            compliance = ComplianceScore.objects.get(member=instance.member)
-            if compliance.score < 100:
-                compliance.score = min(100, compliance.score + 2)
-                compliance.save()
-                compliance.update_status()
-        except ComplianceScore.DoesNotExist:
-            pass
+            NotificationTriggers.attendance_recorded(instance)
+        except Exception as e:
+            print(f"Error sending attendance notification: {e}")
         
-        # Create notification
-        Notification.objects.create(
-            recipient=instance.member.user,
-            notification_type='attendance_alert',
-            title='Attendance Recorded',
-            message=f'Your attendance for {instance.meeting.title} has been recorded.',
-            action_url=f'/meetings/{instance.meeting.id}/'
-        )
+        # Update compliance
+        from compliance.services import ComplianceService
+        try:
+            ComplianceService.check_member(instance.member)
+        except Exception as e:
+            print(f"Error updating compliance for {instance.member}: {e}")

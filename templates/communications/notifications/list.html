@@ -5,8 +5,184 @@
 {% block dashboard_content %}
 <div class="row">
     <div class="col-12">
-        <h1 class="h3">Notifications</h1>
-        <p class="text-muted">No notifications available.</p>
+        <div class="d-flex justify-content-between align-items-center">
+            <h1 class="h3">Notifications</h1>
+            <div>
+                <span class="badge bg-primary me-2">{{ unread_count }} Unread</span>
+                <a href="?mark_all_read=true" class="btn btn-sm btn-success">
+                    <i class="fas fa-check-double"></i> Mark All Read
+                </a>
+            </div>
+        </div>
+        <p class="text-muted">Your notifications and alerts</p>
     </div>
 </div>
+
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-body">
+                {% if notifications %}
+                    {% for notification in notifications %}
+                        <div class="list-group-item list-group-item-action {% if notification.status == 'pending' or notification.status == 'sent' %}bg-light{% endif %}" 
+                             id="notification-{{ notification.id }}">
+                            <div class="d-flex w-100 justify-content-between">
+                                <div>
+                                    <h5 class="mb-1">
+                                        {% if notification.status == 'pending' or notification.status == 'sent' %}
+                                            <span class="badge bg-primary me-1">New</span>
+                                        {% endif %}
+                                        {% if notification.priority == 'urgent' %}
+                                            <span class="badge bg-danger me-1">Urgent</span>
+                                        {% elif notification.priority == 'high' %}
+                                            <span class="badge bg-warning me-1">High</span>
+                                        {% endif %}
+                                        {{ notification.title }}
+                                    </h5>
+                                    <p class="mb-1">{{ notification.message|truncatechars:200 }}</p>
+                                    <small class="text-muted">
+                                        {{ notification.get_notification_type_display }} - 
+                                        {{ notification.created_at|date:"M d, Y H:i" }}
+                                        {% if notification.sent_at %}
+                                            <span class="badge bg-secondary">Sent: {{ notification.sent_at|date:"M d, Y H:i" }}</span>
+                                        {% endif %}
+                                    </small>
+                                </div>
+                                <div class="text-end">
+                                    <div class="btn-group-vertical">
+                                        {% if notification.status == 'pending' or notification.status == 'sent' %}
+                                            <button onclick="markRead({{ notification.id }})" class="btn btn-sm btn-outline-success mb-1">
+                                                <i class="fas fa-check"></i> Read
+                                            </button>
+                                        {% endif %}
+                                        <button onclick="deleteNotification({{ notification.id }})" class="btn btn-sm btn-outline-danger">
+                                            <i class="fas fa-trash"></i> Delete
+                                        </button>
+                                    </div>
+                                    {% if notification.action_url %}
+                                        <a href="{{ notification.action_url }}" class="btn btn-sm btn-primary mt-1">
+                                            <i class="fas fa-arrow-right"></i> View
+                                        </a>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="text-center py-5">
+                        <i class="fas fa-bell-slash fa-4x text-muted mb-3"></i>
+                        <h5>No notifications</h5>
+                        <p class="text-muted">You're all caught up!</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Pagination -->
+{% if notifications.has_other_pages %}
+    <nav aria-label="Page navigation" class="mt-4">
+        <ul class="pagination justify-content-center">
+            {% if notifications.has_previous %}
+                <li class="page-item"><a class="page-link" href="?page=1">&laquo; First</a></li>
+                <li class="page-item"><a class="page-link" href="?page={{ notifications.previous_page_number }}">Previous</a></li>
+            {% endif %}
+            <li class="page-item active"><span class="page-link">{{ notifications.number }}</span></li>
+            {% if notifications.has_next %}
+                <li class="page-item"><a class="page-link" href="?page={{ notifications.next_page_number }}">Next</a></li>
+                <li class="page-item"><a class="page-link" href="?page={{ notifications.paginator.num_pages }}">Last &raquo;</a></li>
+            {% endif %}
+        </ul>
+    </nav>
+{% endif %}
+
+<script>
+// Mark a single notification as read
+function markRead(id) {
+    fetch(`/communications/notifications/${id}/read/`, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': getCsrfToken(),
+            'Content-Type': 'application/json'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.status === 'success') {
+            const element = document.getElementById(`notification-${id}`);
+            if (element) {
+                element.classList.remove('bg-light');
+                const badge = element.querySelector('.badge.bg-primary');
+                if (badge) badge.remove();
+                const readBtn = element.querySelector('.btn-outline-success');
+                if (readBtn) readBtn.remove();
+            }
+            // Update unread count
+            updateUnreadCount();
+        }
+    })
+    .catch(error => console.error('Error:', error));
+}
+
+// Delete a notification
+function deleteNotification(id) {
+    if (!confirm('Are you sure you want to delete this notification?')) return;
+    
+    fetch(`/communications/notifications/${id}/delete/`, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': getCsrfToken(),
+            'Content-Type': 'application/json'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.status === 'success') {
+            const element = document.getElementById(`notification-${id}`);
+            if (element) {
+                element.style.display = 'none';
+            }
+            // Update unread count
+            updateUnreadCount();
+        }
+    })
+    .catch(error => console.error('Error:', error));
+}
+
+// Get CSRF token from cookie
+function getCsrfToken() {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, 10) === 'csrftoken=') {
+                cookieValue = decodeURIComponent(cookie.substring(10));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+
+// Update unread count in the navbar
+function updateUnreadCount() {
+    fetch('{% url "communications:unread_count_json" %}')
+        .then(response => response.json())
+        .then(data => {
+            const badge = document.querySelector('.navbar .badge.bg-danger');
+            if (data.unread_count > 0) {
+                if (badge) {
+                    badge.textContent = data.unread_count;
+                }
+            } else {
+                if (badge) {
+                    badge.remove();
+                }
+            }
+        })
+        .catch(error => console.error('Error:', error));
+}
+</script>
 {% endblock %}

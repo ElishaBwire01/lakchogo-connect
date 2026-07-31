@@ -163,3 +163,27 @@ class FinanceService:
             })
         
         return reversed(trend)
+
+    @staticmethod
+    def generate_receipt(payment):
+        """Generate a receipt for a payment"""
+        import random
+        import string
+        from .models import PaymentReceipt
+        
+        receipt_number = f"REC-{payment.id}-{''.join(random.choices(string.digits, k=6))}"
+        
+        receipt, created = PaymentReceipt.objects.get_or_create(
+            payment=payment,
+            defaults={
+                'receipt_number': receipt_number,
+                'generated_by': payment.recorded_by,
+                'html_content': f"<h1>Receipt for {payment.member.get_full_name()}</h1>"
+            }
+        )
+        
+        if not created:
+            receipt.receipt_number = receipt_number
+            receipt.save()
+        
+        return receipt

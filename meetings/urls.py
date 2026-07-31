@@ -14,7 +14,6 @@ urlpatterns = [
     # QR Code endpoints
     path('<int:meeting_id>/qr/', views.qr_code_display, name='qr_display'),
     path('<int:meeting_id>/qr-image/', views.generate_qr_image, name='qr_image'),
-    path('<int:meeting_id>/qr-json/', views.generate_qr_json, name='qr_json'),
     path('<int:meeting_id>/qr-checkin/', views.qr_check_in, name='qr_check_in'),
     path('<int:meeting_id>/summary/', views.get_attendance_summary, name='summary'),
 ]

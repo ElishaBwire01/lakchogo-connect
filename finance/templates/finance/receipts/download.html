@@ -19,11 +19,11 @@
                 <p>Payment by {{ payment.member.get_full_name }}</p>
                 <p><strong>Amount:</strong> KES {{ payment.amount|floatformat:0 }}</p>
                 <div class="d-grid gap-2 mt-4">
-                    <a href="#" class="btn btn-primary">
-                        <i class="fas fa-download"></i> Download PDF
-                    </a>
-                    <a href="{% url 'finance:receipt_view' payment.id %}" class="btn btn-secondary">
+                    <a href="{% url 'finance:receipt_view' payment.id %}" class="btn btn-primary">
                         <i class="fas fa-eye"></i> View Receipt
+                    </a>
+                    <a href="{% url 'finance:payment_detail' payment.id %}" class="btn btn-secondary">
+                        <i class="fas fa-arrow-left"></i> Back
                     </a>
                 </div>
             </div>
