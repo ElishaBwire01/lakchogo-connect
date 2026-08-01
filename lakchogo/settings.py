@@ -248,3 +248,5 @@ if 'sqlite3' in DATABASES['default']['ENGINE']:
         'timeout': 20,
         'isolation_level': None,
     }
+
+SOCIALACCOUNT_ADAPTER = "accounts.adapter.CustomSocialAccountAdapter"
